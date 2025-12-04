@@ -236,13 +236,13 @@ export function ChecklistForm() {
         <FormField
           control={form.control}
           name="fuelLevel"
-          render={({ field: { onChange, ...fieldProps } }) => (
+          render={({ field }) => (
             <FormItem>
-              <FormLabel>Nível de Combustível ({fieldProps.value}%)</FormLabel>
+              <FormLabel>Nível de Combustível ({field.value}%)</FormLabel>
               <FormControl>
                 <Slider
-                  {...fieldProps}
-                  onValueChange={(value) => onChange(value[0])}
+                  value={[field.value]}
+                  onValueChange={(value) => field.onChange(value[0])}
                   max={100}
                   step={5}
                 />
