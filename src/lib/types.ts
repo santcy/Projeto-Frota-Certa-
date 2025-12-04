@@ -4,7 +4,6 @@ export interface Vehicle {
   id: string;
   plate: string;
   model: string;
-  driver: string;
   status: VehicleStatus;
   fuelLevel: number;
   odometer: number;

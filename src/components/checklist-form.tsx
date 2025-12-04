@@ -37,6 +37,7 @@ import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_SECTIONS, ChecklistItemStatus } from '
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 import { Check, Send } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
 
 const checklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   .flat()
@@ -46,6 +47,7 @@ const checklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   }, {} as Record<string, z.ZodEnum<['ok', 'issue', 'na']>>);
 
 const formSchema = z.object({
+  driver: z.string().min(3, 'O nome do motorista é obrigatório.'),
   vehicleId: z.string({ required_error: 'Selecione um veículo.' }),
   type: z.enum(['Saída', 'Retorno'], { required_error: 'Selecione o tipo de checklist.' }),
   odometer: z.coerce.number().min(1, 'O odômetro é obrigatório.'),
@@ -58,6 +60,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function ChecklistForm() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const defaultItems = Object.values(CHECKLIST_ITEMS)
@@ -70,6 +73,7 @@ export function ChecklistForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      driver: user?.name || '',
       fuelLevel: 50,
       items: defaultItems,
       notes: '',
@@ -88,6 +92,10 @@ export function ChecklistForm() {
       action: <Check className="h-5 w-5 text-green-500" />,
     });
     form.reset({
+      driver: user?.name || '',
+      vehicleId: '',
+      type: undefined,
+      odometer: 0,
       fuelLevel: 50,
       items: defaultItems,
       notes: '',
@@ -98,6 +106,19 @@ export function ChecklistForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <FormField
+            control={form.control}
+            name="driver"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome do Motorista</FormLabel>
+                <FormControl>
+                  <Input placeholder="Seu nome completo" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="vehicleId"
@@ -122,7 +143,8 @@ export function ChecklistForm() {
               </FormItem>
             )}
           />
-          <FormField
+        </div>
+        <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
@@ -143,7 +165,6 @@ export function ChecklistForm() {
               </FormItem>
             )}
           />
-        </div>
 
         <FormField
           control={form.control}
@@ -215,13 +236,13 @@ export function ChecklistForm() {
         <FormField
           control={form.control}
           name="fuelLevel"
-          render={({ field }) => (
+          render={({ field: { onChange, ...fieldProps } }) => (
             <FormItem>
-              <FormLabel>Nível de Combustível ({field.value}%)</FormLabel>
+              <FormLabel>Nível de Combustível ({fieldProps.value}%)</FormLabel>
               <FormControl>
                 <Slider
-                  value={[field.value]}
-                  onValueChange={(value) => field.onChange(value[0])}
+                  {...fieldProps}
+                  onValueChange={(value) => onChange(value[0])}
                   max={100}
                   step={5}
                 />

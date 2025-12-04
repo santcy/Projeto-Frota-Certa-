@@ -23,7 +23,6 @@ import { Check, Send } from 'lucide-react';
 const formSchema = z.object({
   plate: z.string().min(7, 'A placa deve ter no mínimo 7 caracteres.').max(8, 'A placa deve ter no máximo 8 caracteres.'),
   model: z.string().min(2, 'O modelo é obrigatório.'),
-  driver: z.string().min(3, 'O nome do motorista é obrigatório.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -38,7 +37,6 @@ export function VehicleForm() {
     defaultValues: {
       plate: '',
       model: '',
-      driver: '',
     },
   });
 
@@ -91,22 +89,6 @@ export function VehicleForm() {
               </FormControl>
                <FormDescription>
                 O modelo do veículo (ex: marca e nome).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="driver"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Motorista Padrão</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: João da Silva" {...field} />
-              </FormControl>
-               <FormDescription>
-                O motorista principal associado a este veículo.
               </FormDescription>
               <FormMessage />
             </FormItem>
