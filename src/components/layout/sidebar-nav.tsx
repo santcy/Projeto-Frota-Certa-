@@ -9,6 +9,7 @@ import {
   PlusCircle,
   Truck,
   Wrench,
+  Archive,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -26,7 +27,8 @@ import { useAuth, UserRole } from '@/context/auth-context';
 const allNavItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
   { href: '/vehicles', label: 'Veículos', icon: Truck, roles: ['admin'] },
-  { href: '/reports', label: 'Relatórios', icon: FileText, roles: ['admin'] },
+  { href: '/reports', label: 'Histórico', icon: FileText, roles: ['admin'] },
+  { href: '/reports/unified', label: 'Relatório Unificado', icon: Archive, roles: ['admin'] },
   { href: '/checklist', label: 'Novo Checklist', icon: ClipboardCheck, roles: ['admin', 'driver'] },
   { href: '/vehicles/new', label: 'Cadastrar Veículo', icon: PlusCircle, roles: ['admin'] },
 ];

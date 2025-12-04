@@ -118,7 +118,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Relatórios de Checklist
+          Histórico de Checklist
         </h1>
         <p className="text-muted-foreground">
           Visualize o histórico completo de checklists de toda a frota.
