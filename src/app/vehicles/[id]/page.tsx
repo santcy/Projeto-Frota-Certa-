@@ -1,0 +1,121 @@
+import { notFound } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { vehicles, checklists } from '@/lib/data';
+import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_SECTIONS, ChecklistItemStatus } from '@/lib/types';
+import { CheckCircle2, XCircle, CircleSlash } from 'lucide-react';
+
+function getItemStatusIcon(status: ChecklistItemStatus) {
+  switch (status) {
+    case 'ok':
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    case 'issue':
+      return <XCircle className="h-4 w-4 text-destructive" />;
+    case 'na':
+      return <CircleSlash className="h-4 w-4 text-muted-foreground" />;
+  }
+}
+
+export default function VehicleDetailPage({ params }: { params: { id: string } }) {
+  const vehicle = vehicles.find((v) => v.id === params.id);
+  if (!vehicle) {
+    notFound();
+  }
+
+  const vehicleChecklists = checklists
+    .filter((c) => c.vehicleId === vehicle.id)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Detalhes do Veículo: {vehicle.plate}
+        </h1>
+        <p className="text-muted-foreground">{vehicle.model}</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Checklists</CardTitle>
+          <CardDescription>
+            Veja todos os checklists de saída e retorno para este veículo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {vehicleChecklists.length > 0 ? (
+            <Accordion type="single" collapsible className="w-full">
+              {vehicleChecklists.map((checklist) => (
+                <AccordionItem value={checklist.id} key={checklist.id}>
+                  <AccordionTrigger>
+                    <div className="flex w-full items-center justify-between pr-4">
+                      <div className="flex items-center gap-4">
+                        <Badge variant={checklist.type === 'Saída' ? 'outline' : 'default'}>
+                          {checklist.type}
+                        </Badge>
+                        <div className="text-left">
+                          <p className="font-medium">
+                            {new Date(checklist.date).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            por {checklist.driver} às {checklist.time}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground hidden md:block">
+                        Odo. {checklist.odometer.toLocaleString('pt-BR')} km
+                      </p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-4">
+                    {checklist.notes && (
+                      <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-700/50">
+                        <strong>Observações:</strong> {checklist.notes}
+                      </div>
+                    )}
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(([sectionKey, sectionName]) => {
+                        const sectionItems = CHECKLIST_ITEMS[sectionKey as keyof typeof CHECKLIST_ITEMS];
+                        const relevantItems = sectionItems.filter(item => checklist.items[item.id]);
+
+                        if (relevantItems.length === 0) return null;
+
+                        return (
+                          <div key={sectionKey}>
+                            <h4 className="mb-2 font-semibold">{sectionName}</h4>
+                            <ul className="space-y-2">
+                              {relevantItems.map((item) => (
+                                <li key={item.id} className="flex items-center justify-between text-sm">
+                                  <span>{item.label}</span>
+                                  {getItemStatusIcon(checklist.items[item.id])}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              Nenhum checklist encontrado para este veículo.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

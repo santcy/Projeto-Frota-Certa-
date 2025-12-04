@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "admin-avatar",
+      "description": "Avatar for the admin user",
+      "imageUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjQ3OTg1Mjl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "van1",
+      "description": "A white Fiat Fiorino van",
+      "imageUrl": "https://images.unsplash.com/photo-1549194898-60fd030ecc0f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3aGl0ZSUyMHZhbnxlbnwwfHx8fDE3NjQ4Njg4MDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white van"
+    },
+    {
+      "id": "van2",
+      "description": "A white Renault Kangoo van",
+      "imageUrl": "https://images.unsplash.com/photo-1704966698633-338a52929615?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3aGl0ZSUyMHZhbnxlbnwwfHx8fDE3NjQ4Njg4MDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white van"
+    },
+    {
+      "id": "van3",
+      "description": "A white Peugeot Partner van",
+      "imageUrl": "https://images.unsplash.com/photo-1621295764485-46c9e074152b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d2hpdGUlMjB2YW58ZW58MHx8fHwxNzY0ODY4ODA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white van"
+    },
+    {
+      "id": "van4",
+      "description": "Another white Fiat Fiorino van",
+      "imageUrl": "https://images.unsplash.com/photo-1569002861746-64bc833953b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3aGl0ZSUyMHZhbnxlbnwwfHx8fDE3NjQ4Njg4MDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white van"
+    }
+  ]
 }
