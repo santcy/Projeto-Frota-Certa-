@@ -77,8 +77,7 @@ function VehicleDetailsSkeleton() {
   );
 }
 
-export default function VehicleDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function VehicleDetailPage({ params: { id } }: { params: { id: string } }) {
   const { firestore } = useFirebase();
   const { user } = useAuth();
   const router = useRouter();

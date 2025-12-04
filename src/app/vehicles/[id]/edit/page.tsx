@@ -48,8 +48,7 @@ function EditVehicleSkeleton() {
 }
 
 
-export default function EditVehiclePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditVehiclePage({ params: { id } }: { params: { id: string } }) {
   const { firestore } = useFirebase();
   const { user } = useAuth();
   
