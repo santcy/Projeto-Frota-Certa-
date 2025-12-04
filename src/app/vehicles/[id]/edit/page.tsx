@@ -48,13 +48,13 @@ function EditVehicleSkeleton() {
 }
 
 
-export default function EditVehiclePage({ params }: { params: { id: string } }) {
+export default function EditVehiclePage({ params: { id } }: { params: { id: string } }) {
   const { firestore } = useFirebase();
   const { user } = useAuth();
   
   const vehicleRef = useMemoFirebase(
-    () => (firestore && params.id ? doc(firestore, 'vehicles', params.id) : null),
-    [firestore, params.id]
+    () => (firestore && id ? doc(firestore, 'vehicles', id) : null),
+    [firestore, id]
   );
   const { data: vehicle, isLoading } = useDoc<Vehicle>(vehicleRef);
 
