@@ -1,5 +1,12 @@
+'use client';
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Accordion,
   AccordionContent,
@@ -7,9 +14,23 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { vehicles, checklists } from '@/lib/data';
-import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_SECTIONS, ChecklistItemStatus } from '@/lib/types';
+import {
+  CHECKLIST_ITEMS,
+  CHECKLIST_ITEMS_SECTIONS,
+  ChecklistItemStatus,
+  type Vehicle,
+  type Checklist,
+} from '@/lib/types';
 import { CheckCircle2, XCircle, CircleSlash } from 'lucide-react';
+import {
+  useDoc,
+  useCollection,
+  useFirebase,
+  useMemoFirebase,
+  WithId,
+} from '@/firebase';
+import { doc, collection, query, where, orderBy } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function getItemStatusIcon(status: ChecklistItemStatus) {
   switch (status) {
@@ -22,15 +43,59 @@ function getItemStatusIcon(status: ChecklistItemStatus) {
   }
 }
 
+function VehicleDetailsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="mt-2 h-5 w-48" />
+      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="mt-1 h-4 w-full" />
+        </CardHeader>
+        <CardContent className="space-y-2">
+            {Array.from({length: 3}).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+            ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
-  const vehicle = vehicles.find((v) => v.id === params.id);
+  const { firestore } = useFirebase();
+
+  const vehicleRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'vehicles', params.id) : null),
+    [firestore, params.id]
+  );
+  const { data: vehicle, isLoading: isLoadingVehicle } =
+    useDoc<Vehicle>(vehicleRef);
+
+  const checklistsQuery = useMemoFirebase(
+    () =>
+      firestore
+        ? query(
+            collection(firestore, 'checklists'),
+            where('vehicleId', '==', params.id),
+            orderBy('date', 'desc')
+          )
+        : null,
+    [firestore, params.id]
+  );
+  const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
+    useCollection<Checklist>(checklistsQuery);
+    
+  if (isLoadingVehicle || isLoadingChecklists) {
+    return <VehicleDetailsSkeleton />;
+  }
+  
   if (!vehicle) {
     notFound();
   }
-
-  const vehicleChecklists = checklists
-    .filter((c) => c.vehicleId === vehicle.id)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="space-y-6">
@@ -49,26 +114,32 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {vehicleChecklists.length > 0 ? (
+          {vehicleChecklists && vehicleChecklists.length > 0 ? (
             <Accordion type="single" collapsible className="w-full">
               {vehicleChecklists.map((checklist) => (
                 <AccordionItem value={checklist.id} key={checklist.id}>
                   <AccordionTrigger>
                     <div className="flex w-full items-center justify-between pr-4">
                       <div className="flex items-center gap-4">
-                        <Badge variant={checklist.type === 'Saída' ? 'outline' : 'default'}>
+                        <Badge
+                          variant={
+                            checklist.type === 'Saída' ? 'outline' : 'default'
+                          }
+                        >
                           {checklist.type}
                         </Badge>
                         <div className="text-left">
                           <p className="font-medium">
-                            {new Date(checklist.date).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: 'long',
-                              year: 'numeric',
-                            })}
+                            {checklist.date
+                              .toDate()
+                              .toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric',
+                              })}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            por {checklist.driver} às {checklist.time}
+                            por {checklist.driverName}
                           </p>
                         </div>
                       </div>
@@ -84,26 +155,40 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                       </div>
                     )}
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(([sectionKey, sectionName]) => {
-                        const sectionItems = CHECKLIST_ITEMS[sectionKey as keyof typeof CHECKLIST_ITEMS];
-                        const relevantItems = sectionItems.filter(item => checklist.items[item.id]);
+                      {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(
+                        ([sectionKey, sectionName]) => {
+                          const sectionItems =
+                            CHECKLIST_ITEMS[
+                              sectionKey as keyof typeof CHECKLIST_ITEMS
+                            ];
+                          const relevantItems = sectionItems.filter(
+                            (item) => checklist.items[item.id]
+                          );
 
-                        if (relevantItems.length === 0) return null;
+                          if (relevantItems.length === 0) return null;
 
-                        return (
-                          <div key={sectionKey}>
-                            <h4 className="mb-2 font-semibold">{sectionName}</h4>
-                            <ul className="space-y-2">
-                              {relevantItems.map((item) => (
-                                <li key={item.id} className="flex items-center justify-between text-sm">
-                                  <span>{item.label}</span>
-                                  {getItemStatusIcon(checklist.items[item.id])}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        );
-                      })}
+                          return (
+                            <div key={sectionKey}>
+                              <h4 className="mb-2 font-semibold">
+                                {sectionName}
+                              </h4>
+                              <ul className="space-y-2">
+                                {relevantItems.map((item) => (
+                                  <li
+                                    key={item.id}
+                                    className="flex items-center justify-between text-sm"
+                                  >
+                                    <span>{item.label}</span>
+                                    {getItemStatusIcon(
+                                      checklist.items[item.id]
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>

@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+'use client';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -7,96 +13,122 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { vehicles, checklists } from '@/lib/data';
 import { AlertTriangle, Fuel, Truck, Wrench } from 'lucide-react';
-import type { VehicleStatus } from '@/lib/types';
+import {
+  useCollection,
+  useFirebase,
+  useMemoFirebase,
+  WithId,
+} from '@/firebase';
+import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import type { Vehicle, Checklist } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-function getStatusVariant(status: VehicleStatus) {
-  switch (status) {
-    case 'Operacional':
-      return 'default';
-    case 'Com Problemas':
-      return 'destructive';
-    case 'Manutenção':
-      return 'secondary';
-    default:
-      return 'default';
-  }
+function DashboardCard({
+  title,
+  icon,
+  value,
+  description,
+  isLoading,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  value: number | string;
+  description: string;
+  isLoading: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="mt-1 h-4 w-full" />
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-bold">{value}</div>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function Dashboard() {
-  const vehiclesWithProblems = vehicles.filter(
-    (v) => v.status === 'Com Problemas'
-  ).length;
-  const vehiclesInMaintenance = vehicles.filter(
-    (v) => v.status === 'Manutenção'
-  ).length;
-  const lowFuelVehicles = vehicles.filter((v) => v.fuelLevel < 25).length;
+  const { firestore } = useFirebase();
 
-  const recentAlerts = checklists
-    .filter((c) => Object.values(c.items).includes('issue'))
-    .slice(0, 5);
+  const vehiclesQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'vehicles') : null),
+    [firestore]
+  );
+  const { data: vehicles, isLoading: isLoadingVehicles } =
+    useCollection<Vehicle>(vehiclesQuery);
+
+  const checklistsQuery = useMemoFirebase(
+    () =>
+      firestore
+        ? query(
+            collection(firestore, 'checklists'),
+            orderBy('date', 'desc'),
+            limit(5)
+          )
+        : null,
+    [firestore]
+  );
+  const { data: recentChecklists, isLoading: isLoadingChecklists } =
+    useCollection<Checklist>(checklistsQuery);
+
+  const vehiclesWithProblems =
+    vehicles?.filter((v) => v.status === 'Com Problemas').length ?? 0;
+  const vehiclesInMaintenance =
+    vehicles?.filter((v) => v.status === 'Manutenção').length ?? 0;
+  const lowFuelVehicles =
+    vehicles?.filter((v) => v.fuelLevel < 25).length ?? 0;
+
+  const hasIssues = (checklist: WithId<Checklist>) => {
+    return Object.values(checklist.items).some((status) => status === 'issue');
+  };
+  
+  const recentAlerts = recentChecklists?.filter(hasIssues);
+
 
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Veículos
-            </CardTitle>
-            <Truck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vehicles.length}</div>
-            <p className="text-xs text-muted-foreground">
-              veículos na frota
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Com Problemas
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vehiclesWithProblems}</div>
-            <p className="text-xs text-muted-foreground">
-              requerem atenção imediata
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Em Manutenção
-            </CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vehiclesInMaintenance}</div>
-            <p className="text-xs text-muted-foreground">
-              veículos atualmente na oficina
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Combustível Baixo
-            </CardTitle>
-            <Fuel className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{lowFuelVehicles}</div>
-            <p className="text-xs text-muted-foreground">
-              veículos com menos de 25%
-            </p>
-          </CardContent>
-        </Card>
+        <DashboardCard
+          title="Total de Veículos"
+          icon={<Truck className="h-4 w-4 text-muted-foreground" />}
+          value={vehicles?.length ?? 0}
+          description="veículos na frota"
+          isLoading={isLoadingVehicles}
+        />
+        <DashboardCard
+          title="Com Problemas"
+          icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
+          value={vehiclesWithProblems}
+          description="requerem atenção imediata"
+          isLoading={isLoadingVehicles}
+        />
+        <DashboardCard
+          title="Em Manutenção"
+          icon={<Wrench className="h-4 w-4 text-muted-foreground" />}
+          value={vehiclesInMaintenance}
+          description="veículos atualmente na oficina"
+          isLoading={isLoadingVehicles}
+        />
+        <DashboardCard
+          title="Combustível Baixo"
+          icon={<Fuel className="h-4 w-4 text-muted-foreground" />}
+          value={lowFuelVehicles}
+          description="veículos com menos de 25%"
+          isLoading={isLoadingVehicles}
+        />
       </div>
 
       <Card>
@@ -114,15 +146,30 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentAlerts.length > 0 ? (
+              {isLoadingChecklists ? (
+                 Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    </TableRow>
+                  ))
+              ) : recentAlerts && recentAlerts.length > 0 ? (
                 recentAlerts.map((alert) => {
-                  const vehicle = vehicles.find(v => v.id === alert.vehicleId);
+                  const vehicle = vehicles?.find((v) => v.id === alert.vehicleId);
                   return (
                     <TableRow key={alert.id}>
-                      <TableCell className="font-medium">{vehicle?.plate || 'N/A'}</TableCell>
-                      <TableCell>{alert.driver}</TableCell>
-                      <TableCell>{new Date(alert.date).toLocaleDateString('pt-BR')}</TableCell>
-                      <TableCell className="text-destructive">{alert.notes}</TableCell>
+                      <TableCell className="font-medium">
+                        {vehicle?.plate || 'N/A'}
+                      </TableCell>
+                      <TableCell>{alert.driverName}</TableCell>
+                      <TableCell>
+                        {alert.date.toDate().toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-destructive">
+                        {alert.notes || 'Problema reportado no checklist.'}
+                      </TableCell>
                     </TableRow>
                   );
                 })

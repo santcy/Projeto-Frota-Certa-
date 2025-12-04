@@ -11,9 +11,31 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react'; // Renamed to avoid conflict
+import { useAuth } from '@/context/auth-context';
+import { useAuth as useFirebaseAuth } from '@/firebase'; // Firebase auth instance
+import { Skeleton } from '@/components/ui/skeleton';
+import { signOut } from 'firebase/auth';
 
 export function Header() {
+  const { user, isUserLoading } = useAuth();
+  const auth = useFirebaseAuth();
+
+  const handleLogout = () => {
+    signOut(auth);
+  };
+
+  if (isUserLoading) {
+    return (
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="md:hidden" />
+        </div>
+        <Skeleton className="h-10 w-10 rounded-full" />
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
       <div className="flex items-center gap-2">
@@ -23,30 +45,46 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="https://picsum.photos/seed/10/100/100" alt="Admin" data-ai-hint="person portrait"/>
-              <AvatarFallback>AD</AvatarFallback>
+              <AvatarImage
+                src={user?.firebaseUser.photoURL || `https://avatar.vercel.sh/${user?.email}.png`}
+                alt={user?.name || 'Usuário'}
+                data-ai-hint="person portrait"
+              />
+              <AvatarFallback>
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">Admin</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                admin@rotacerta.com
-              </p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Perfil</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sair</span>
-          </DropdownMenuItem>
+          {user ? (
+            <>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user.name}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Perfil</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </>
+          ) : (
+             <DropdownMenuLabel className="font-normal">
+                <p className="text-sm">Não autenticado</p>
+              </DropdownMenuLabel>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

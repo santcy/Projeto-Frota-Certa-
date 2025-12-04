@@ -1,14 +1,17 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type VehicleStatus = 'Operacional' | 'Manutenção' | 'Com Problemas';
 
 export interface Vehicle {
   id: string;
   plate: string;
   model: string;
+  make: string;
   status: VehicleStatus;
   fuelLevel: number;
   odometer: number;
-  image: string;
-  lastCheck: string;
+  image?: string;
+  lastCheck?: Timestamp;
 }
 
 export type ChecklistItemStatus = 'ok' | 'issue' | 'na';
@@ -22,10 +25,10 @@ export interface ChecklistItem {
 export interface Checklist {
   id: string;
   vehicleId: string;
-  driver: string;
+  userId: string;
+  driverName: string; // Denormalized for display
   type: 'Saída' | 'Retorno';
-  date: string;
-  time: string;
+  date: Timestamp;
   odometer: number;
   fuelLevel: number;
   items: Record<string, ChecklistItemStatus>;
