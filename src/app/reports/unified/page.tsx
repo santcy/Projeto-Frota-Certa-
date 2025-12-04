@@ -30,19 +30,18 @@ interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
 
+const allChecklistItems = Object.values(CHECKLIST_ITEMS).flat();
+
 type UnifiedReportData = {
   [vehicleId: string]: {
     vehicle: WithId<Vehicle>;
-    issues: {
-      [itemId: string]: {
-        label: string;
-        count: number;
-      };
-    };
+    checklistsWithIssues: {
+      checklist: WithId<Checklist>;
+      issues: { id: string; label: string }[];
+    }[];
   };
 };
 
-const allChecklistItems = Object.values(CHECKLIST_ITEMS).flat();
 
 export default function UnifiedReportPage() {
   const { firestore } = useFirebase();
@@ -74,24 +73,27 @@ export default function UnifiedReportPage() {
       const vehicle = vehicles.find(v => v.id === checklist.vehicleId);
       if (!vehicle) return acc;
 
-      if (!acc[vehicle.id]) {
-        acc[vehicle.id] = {
-          vehicle,
-          issues: {},
-        };
-      }
+      const issues = Object.entries(checklist.items)
+        .filter(([_, status]) => status === 'issue')
+        .map(([itemId, _]) => {
+          const itemDefinition = allChecklistItems.find(i => i.id === itemId);
+          return {
+            id: itemId,
+            label: itemDefinition?.label || 'Item desconhecido',
+          };
+        });
 
-      for (const [itemId, status] of Object.entries(checklist.items)) {
-        if (status === 'issue') {
-          if (!acc[vehicle.id].issues[itemId]) {
-            const itemDefinition = allChecklistItems.find(i => i.id === itemId);
-            acc[vehicle.id].issues[itemId] = {
-              label: itemDefinition?.label || 'Item desconhecido',
-              count: 0,
-            };
-          }
-          acc[vehicle.id].issues[itemId].count += 1;
+      if (issues.length > 0) {
+        if (!acc[vehicle.id]) {
+          acc[vehicle.id] = {
+            vehicle,
+            checklistsWithIssues: [],
+          };
         }
+        acc[vehicle.id].checklistsWithIssues.push({
+          checklist,
+          issues,
+        });
       }
 
       return acc;
@@ -111,10 +113,7 @@ export default function UnifiedReportPage() {
 
     for (const vehicleId in reportData) {
         const data = reportData[vehicleId];
-        const { vehicle, issues } = data;
-        const issueEntries = Object.entries(issues);
-
-        if (issueEntries.length === 0) continue;
+        const { vehicle, checklistsWithIssues } = data;
 
         if (startY > 250) { // Page break check
           doc.addPage();
@@ -129,17 +128,36 @@ export default function UnifiedReportPage() {
             headStyles: { fillColor: [30, 58, 138] }, // Primary color
         });
 
-        const tableBody = issueEntries.map(([_, issueData]) => [issueData.label, issueData.count]);
-        
-        doc.autoTable({
-            startY: (doc as any).lastAutoTable.finalY,
-            head: [['Item do Checklist', 'Nº de Ocorrências']],
-            body: tableBody,
-            theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229] }, // A slightly different color
-        });
+        startY = (doc as any).lastAutoTable.finalY;
 
-        startY = (doc as any).lastAutoTable.finalY + 15;
+        for (const { checklist, issues } of checklistsWithIssues) {
+            const checklistInfo = [
+              ['Data:', checklist.date.toDate().toLocaleDateString('pt-BR')],
+              ['Motorista:', checklist.driverName],
+              ['Odômetro:', `${checklist.odometer.toLocaleString('pt-BR')} km`],
+            ];
+
+            const issuesText = issues.map(issue => `- ${issue.label}`).join('\n');
+            const tableBody = [
+                ...checklistInfo,
+                [{ content: 'Problemas Reportados:', styles: { fontStyle: 'bold' } }],
+                [{ content: issuesText, colSpan: 2 }],
+            ];
+            
+            if (startY > 260) {
+                doc.addPage();
+                startY = 20;
+            }
+
+            doc.autoTable({
+                startY: startY,
+                body: tableBody,
+                theme: 'grid',
+                columnStyles: { 0: { fontStyle: 'bold' } }
+            });
+            startY = (doc as any).lastAutoTable.finalY + 5;
+        }
+        startY += 10;
     }
 
 
@@ -186,10 +204,7 @@ export default function UnifiedReportPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {Object.values(reportData).map(({ vehicle, issues }) => {
-            const issueEntries = Object.entries(issues);
-            if (issueEntries.length === 0) return null;
-
+          {Object.values(reportData).map(({ vehicle, checklistsWithIssues }) => {
             return (
               <Card key={vehicle.id}>
                 <CardHeader>
@@ -201,16 +216,22 @@ export default function UnifiedReportPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Item do Checklist</TableHead>
-                        <TableHead className="text-right">Ocorrências</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Motorista</TableHead>
+                        <TableHead>Problemas Reportados</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {issueEntries.map(([itemId, issueData]) => (
-                        <TableRow key={itemId}>
-                          <TableCell className="font-medium">{issueData.label}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant="destructive">{issueData.count}</Badge>
+                      {checklistsWithIssues.map(({ checklist, issues }) => (
+                        <TableRow key={checklist.id}>
+                          <TableCell>{checklist.date.toDate().toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>{checklist.driverName}</TableCell>
+                          <TableCell>
+                            <ul className="list-disc pl-5 space-y-1">
+                                {issues.map(issue => (
+                                    <li key={issue.id}>{issue.label}</li>
+                                ))}
+                            </ul>
                           </TableCell>
                         </TableRow>
                       ))}
