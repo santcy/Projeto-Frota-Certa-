@@ -6,6 +6,7 @@ import {
   ClipboardCheck,
   FileText,
   LayoutDashboard,
+  PlusCircle,
   Truck,
   Wrench,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/vehicles', label: 'Veículos', icon: Truck },
   { href: '/reports', label: 'Relatórios', icon: FileText },
   { href: '/checklist', label: 'Novo Checklist', icon: ClipboardCheck },
+  { href: '/vehicles/new', label: 'Cadastrar Veículo', icon: PlusCircle },
 ];
 
 export function SidebarNav() {
