@@ -33,6 +33,12 @@ import {
 import { useAuth } from '@/context/auth-context';
 import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
 
 function getItemStatusIcon(status: ChecklistItemStatus) {
   switch (status) {
@@ -93,49 +99,64 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     useCollection<Checklist>(checklistsQuery);
 
   const handleDownloadChecklist = (checklist: WithId<Checklist>, vehicle: WithId<Vehicle>) => {
-    let content = `ROTA CERTA - Relatório de Checklist\n\n`;
-    content += `-----------------------------------\n`;
-    content += `INFORMAÇÕES GERAIS\n`;
-    content += `-----------------------------------\n`;
-    content += `Veículo: ${vehicle.plate} - ${vehicle.model}\n`;
-    content += `Motorista: ${checklist.driverName}\n`;
-    content += `Data: ${checklist.date.toDate().toLocaleString('pt-BR')}\n`;
-    content += `Tipo: ${checklist.type}\n`;
-    content += `Odômetro: ${checklist.odometer.toLocaleString('pt-BR')} km\n`;
-    content += `Nível de Combustível: ${checklist.fuelLevel}%\n\n`;
+    const doc = new jsPDF() as jsPDFWithAutoTable;
 
-    content += `-----------------------------------\n`;
-    content += `ITENS DO CHECKLIST\n`;
-    content += `-----------------------------------\n`;
-    Object.entries(CHECKLIST_ITEMS_SECTIONS).forEach(([sectionKey, sectionName]) => {
+    doc.setFontSize(18);
+    doc.text('ROTA CERTA - Relatório de Checklist', 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    
+    const generalInfo = [
+      ['Veículo:', `${vehicle.plate} - ${vehicle.model}`],
+      ['Motorista:', checklist.driverName],
+      ['Data:', checklist.date.toDate().toLocaleString('pt-BR')],
+      ['Tipo:', checklist.type],
+      ['Odômetro:', `${checklist.odometer.toLocaleString('pt-BR')} km`],
+      ['Combustível:', `${checklist.fuelLevel}%`],
+    ];
+
+    doc.autoTable({
+      startY: 30,
+      head: [['INFORMAÇÕES GERAIS', '']],
+      body: generalInfo,
+      theme: 'striped',
+      headStyles: { fillColor: [30, 58, 138] },
+    });
+    
+    const checklistBody = [];
+
+    for (const [sectionKey, sectionName] of Object.entries(CHECKLIST_ITEMS_SECTIONS)) {
       const sectionItems = CHECKLIST_ITEMS[sectionKey as keyof typeof CHECKLIST_ITEMS];
       const relevantItems = sectionItems.filter(item => checklist.items[item.id]);
 
       if (relevantItems.length > 0) {
-        content += `\n${sectionName.toUpperCase()}\n`;
-        relevantItems.forEach(item => {
+        checklistBody.push([{ content: sectionName.toUpperCase(), colSpan: 2, styles: { fontStyle: 'bold', fillColor: [241, 245, 249] } }]);
+        for (const item of relevantItems) {
           const status = checklist.items[item.id];
-          content += `- ${item.label}: ${status.toUpperCase()}\n`;
-        });
+          checklistBody.push([item.label, status.toUpperCase()]);
+        }
       }
+    }
+
+    doc.autoTable({
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['Item', 'Status']],
+      body: checklistBody,
+      theme: 'grid',
+      headStyles: { fillColor: [30, 58, 138] },
     });
 
     if (checklist.notes) {
-      content += `\n-----------------------------------\n`;
-      content += `OBSERVAÇÕES\n`;
-      content += `-----------------------------------\n`;
-      content += `${checklist.notes}\n`;
+      doc.autoTable({
+        startY: (doc as any).lastAutoTable.finalY + 10,
+        head: [['OBSERVAÇÕES']],
+        body: [[checklist.notes]],
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138] },
+      });
     }
 
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    doc.save(`checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.pdf`);
   };
     
   if (isLoadingVehicle || isLoadingChecklists) {
