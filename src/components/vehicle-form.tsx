@@ -21,6 +21,11 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Send } from 'lucide-react';
 import { useFirebase, setDocumentNonBlocking } from '@/firebase';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
+import { Label } from './ui/label';
 
 const formSchema = z.object({
   plate: z
@@ -30,9 +35,12 @@ const formSchema = z.object({
     .trim(),
   model: z.string().min(2, 'O modelo é obrigatório.').trim(),
   make: z.string().min(2, 'A marca é obrigatória.').trim(),
+  image: z.string().url('Selecione uma imagem válida.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const vehicleImages = PlaceHolderImages.filter(img => img.imageHint.includes('van'));
 
 export function VehicleForm() {
   const { toast } = useToast();
@@ -46,6 +54,7 @@ export function VehicleForm() {
       plate: '',
       model: '',
       make: '',
+      image: vehicleImages[0]?.imageUrl || '',
     },
   });
 
@@ -70,7 +79,6 @@ export function VehicleForm() {
       status: 'Operacional',
       fuelLevel: 100,
       odometer: 0,
-      image: `https://picsum.photos/seed/${vehicleRef.id}/400/300`,
     };
 
     setDocumentNonBlocking(vehicleRef, newVehicle, {});
@@ -138,6 +146,50 @@ export function VehicleForm() {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Foto do Veículo</FormLabel>
+              <FormDescription>
+                Selecione uma imagem para o veículo.
+              </FormDescription>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                >
+                  {vehicleImages.map((image) => (
+                    <FormItem key={image.id} className="space-y-0">
+                      <FormControl>
+                        <div>
+                          <RadioGroupItem value={image.imageUrl} id={image.id} className="peer sr-only" />
+                          <Label
+                            htmlFor={image.id}
+                            className="block cursor-pointer rounded-md border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                          >
+                            <Image
+                              src={image.imageUrl}
+                              alt={image.description}
+                              width={200}
+                              height={150}
+                              className="aspect-[4/3] w-full object-cover rounded-md"
+                              data-ai-hint={image.imageHint}
+                            />
+                          </Label>
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
 
         <Button
           type="submit"
