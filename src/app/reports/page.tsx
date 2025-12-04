@@ -2,7 +2,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -15,14 +14,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useCollection, useFirebase, useMemoFirebase, WithId, useUser } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, WithId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import type { Vehicle, Checklist } from '@/lib/types';
+import type { Vehicle, Checklist, ChecklistItemStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { CHECKLIST_ITEMS_SECTIONS, CHECKLIST_ITEMS } from '@/lib/types';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 export default function ReportsPage() {
   const { firestore } = useFirebase();
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const checklistsQuery = useMemoFirebase(
     () =>
@@ -42,6 +52,67 @@ export default function ReportsPage() {
     useCollection<Vehicle>(vehiclesQuery);
 
   const isLoading = isLoadingChecklists || isLoadingVehicles;
+
+  const handleDownloadChecklist = (checklist: WithId<Checklist>, vehicle: WithId<Vehicle>) => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+
+    doc.setFontSize(18);
+    doc.text('ROTA CERTA - Relatório de Checklist', 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    
+    const generalInfo = [
+      ['Veículo:', `${vehicle.plate} - ${vehicle.model}`],
+      ['Motorista:', checklist.driverName],
+      ['Data:', checklist.date.toDate().toLocaleString('pt-BR')],
+      ['Tipo:', checklist.type],
+      ['Odômetro:', `${checklist.odometer.toLocaleString('pt-BR')} km`],
+      ['Combustível:', `${checklist.fuelLevel}%`],
+    ];
+
+    doc.autoTable({
+      startY: 30,
+      head: [['INFORMAÇÕES GERAIS', '']],
+      body: generalInfo,
+      theme: 'striped',
+      headStyles: { fillColor: [30, 58, 138] },
+    });
+    
+    const checklistBody = [];
+
+    for (const [sectionKey, sectionName] of Object.entries(CHECKLIST_ITEMS_SECTIONS)) {
+      const sectionItems = CHECKLIST_ITEMS[sectionKey as keyof typeof CHECKLIST_ITEMS];
+      const relevantItems = sectionItems.filter(item => checklist.items[item.id]);
+
+      if (relevantItems.length > 0) {
+        checklistBody.push([{ content: sectionName.toUpperCase(), colSpan: 2, styles: { fontStyle: 'bold', fillColor: [241, 245, 249] } }]);
+        for (const item of relevantItems) {
+          const status = checklist.items[item.id];
+          checklistBody.push([item.label, status.toUpperCase()]);
+        }
+      }
+    }
+
+    doc.autoTable({
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['Item', 'Status']],
+      body: checklistBody,
+      theme: 'grid',
+      headStyles: { fillColor: [30, 58, 138] },
+    });
+
+    if (checklist.notes) {
+      doc.autoTable({
+        startY: (doc as any).lastAutoTable.finalY + 10,
+        head: [['OBSERVAÇÕES']],
+        body: [[checklist.notes]],
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138] },
+      });
+    }
+
+    doc.save(`checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.pdf`);
+  };
 
   return (
     <div className="space-y-6">
@@ -67,7 +138,8 @@ export default function ReportsPage() {
                 <TableHead>Motorista</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Odômetro</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,8 +161,11 @@ export default function ReportsPage() {
                       <TableCell>
                         <Skeleton className="h-5 w-20" />
                       </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-24" />
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Skeleton className="h-6 w-24 ml-auto" />
+                        <Skeleton className="h-8 w-8 ml-auto" />
                       </TableCell>
                     </TableRow>
                   ))
@@ -129,10 +204,22 @@ export default function ReportsPage() {
                         <TableCell>
                           {checklist.odometer.toLocaleString('pt-BR')} km
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                           <Badge variant={hasIssues ? 'destructive' : 'default'}>
                             {hasIssues ? 'Com Problemas' : 'OK'}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {user?.role === 'admin' && vehicle && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleDownloadChecklist(checklist, vehicle)}
+                              >
+                                <Download className="h-4 w-4" />
+                                <span className="sr-only">Baixar PDF</span>
+                              </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
