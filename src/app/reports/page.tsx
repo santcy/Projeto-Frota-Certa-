@@ -15,27 +15,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useCollection, useFirebase, useMemoFirebase, WithId } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, WithId, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportsPage() {
   const { firestore } = useFirebase();
+  const { user } = useUser();
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore
+      firestore && user
         ? query(collection(firestore, 'checklists'), orderBy('date', 'desc'))
         : null,
-    [firestore]
+    [firestore, user]
   );
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'vehicles') : null),
+    [firestore, user]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);

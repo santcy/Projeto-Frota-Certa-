@@ -19,6 +19,7 @@ import {
   useFirebase,
   useMemoFirebase,
   WithId,
+  useUser,
 } from '@/firebase';
 import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
@@ -62,24 +63,25 @@ function DashboardCard({
 
 export default function Dashboard() {
   const { firestore } = useFirebase();
+  const { user } = useUser();
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'vehicles') : null),
+    [firestore, user]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore
+      firestore && user
         ? query(
             collection(firestore, 'checklists'),
             orderBy('date', 'desc'),
             limit(5)
           )
         : null,
-    [firestore]
+    [firestore, user]
   );
   const { data: recentChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);

@@ -9,6 +9,7 @@ import {
   useFirebase,
   useMemoFirebase,
   WithId,
+  useUser,
 } from '@/firebase';
 import { collection, orderBy, query } from 'firebase/firestore';
 import type { Vehicle, Checklist, VehicleStatus } from '@/lib/types';
@@ -126,23 +127,24 @@ function VehicleCardSkeleton() {
 
 export default function VehiclesPage() {
   const { firestore } = useFirebase();
+  const { user } = useUser();
 
   const vehiclesQuery = useMemoFirebase(
     () =>
-      firestore
+      firestore && user
         ? query(collection(firestore, 'vehicles'), orderBy('plate', 'asc'))
         : null,
-    [firestore]
+    [firestore, user]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore
+      firestore && user
         ? query(collection(firestore, 'checklists'), orderBy('date', 'desc'))
         : null,
-    [firestore]
+    [firestore, user]
   );
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);

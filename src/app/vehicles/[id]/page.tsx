@@ -28,6 +28,7 @@ import {
   useFirebase,
   useMemoFirebase,
   WithId,
+  useUser,
 } from '@/firebase';
 import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -67,24 +68,25 @@ function VehicleDetailsSkeleton() {
 
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
   const { firestore } = useFirebase();
+  const { user } = useUser();
 
   const vehicleRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'vehicles', params.id) : null),
-    [firestore, params.id]
+    () => (firestore && user ? doc(firestore, 'vehicles', params.id) : null),
+    [firestore, user, params.id]
   );
   const { data: vehicle, isLoading: isLoadingVehicle } =
     useDoc<Vehicle>(vehicleRef);
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore
+      firestore && user
         ? query(
             collection(firestore, 'checklists'),
             where('vehicleId', '==', params.id),
             orderBy('date', 'desc')
           )
         : null,
-    [firestore, params.id]
+    [firestore, user, params.id]
   );
   const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);

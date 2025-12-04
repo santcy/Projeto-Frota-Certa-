@@ -9,8 +9,8 @@
  * Data Structure:
  * - /users/{userId}: Private user profile documents.
  * - /vehicles/{vehicleId}: A top-level collection of all vehicles in the system.
- * - /vehicles/{vehicleId}/checklists/{checklistId}: Subcollection for checklists related to a specific vehicle.
- * - /vehicles/{vehicleId}/checklists/{checklistId}/checklistItems/{checklistItemId}: Subcollection for items on a specific checklist.
+ * - /checklists/{checklistId}: A top-level collection for all checklists.
+ * - /checklistItems/{checklistItemId}: A top-level collection for all checklist items.
  *
  * Key Security Decisions:
  * - Admin Role Check: Since authorization roles ('admin', 'driver') are stored on the /users/{userId} document,
@@ -28,7 +28,7 @@
  * secure operations.
  *
  * Structural Segregation:
- * The data is segregated into distinct collections (/users, /vehicles). This clear separation ensures that security
+ * The data is segregated into distinct collections (/users, /vehicles, /checklists, etc). This clear separation ensures that security
  * rules are simple and that queries for public data (vehicles) do not accidentally expose private data (user profiles).
  */
 rules_version = '2';
@@ -79,19 +79,10 @@ service cloud.firestore {
     /**
      * Validates that critical relational IDs are not changed during an update.
      */
-    function relationalIdsAreImmutable() {
-      return request.resource.data.id == resource.data.id
-          && request.resource.data.vehicleId == resource.data.vehicleId
-          && request.resource.data.userId == resource.data.userId;
-    }
-
-    /**
-     * Checks if the current user has permission to access a checklist, either as its
-     * owner or as an admin.
-     */
-    function canAccessChecklist(vehicleId, checklistsId) {
-      let checklist = get(/databases/$(database)/documents/vehicles/$(vehicleId)/checklists/$(checklistsId));
-      return isOwner(checklist.data.userId) || isAdmin();
+    function relationalIdsAreImmutable(requestData, resourceData) {
+      return requestData.id == resourceData.id
+          && requestData.vehicleId == resourceData.vehicleId
+          && requestData.userId == resourceData.userId;
     }
     
     /**
@@ -125,33 +116,24 @@ service cloud.firestore {
     }
     
     /**
-     * @description Manages vehicle checklists. A user can create checklists for any vehicle, but can only modify checklists they created. Admins have full access.
-     * @path /vehicles/{vehicleId}/checklists/{checklistsId}
+     * @description Manages vehicle checklists. A user can create checklists, but can only modify checklists they created. Admins have full access.
+     * @path /checklists/{checklistsId}
      * @allow (create) An authenticated driver creating a new checklist for a vehicle: `auth.uid != null` and the new document has `userId` set to their UID.
      * @deny (update) A driver trying to modify a checklist created by another driver.
-     * @principle Enforces document ownership for writes, while allowing admins to manage any record. Validates relational integrity on create.
+     * @principle Enforces document ownership for writes, while allowing admins to manage any record.
      */
-    match /vehicles/{vehicleId}/checklists/{checklistsId} {
+    match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.vehicleId == vehicleId && request.resource.data.id == checklistsId;
-      allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable();
+      allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
+      allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
       allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
     }
-    
+
     /**
-     * @description Manages individual items within a checklist. Access is inherited from the parent checklist.
-     * @path /vehicles/{vehicleId}/checklists/{checklistsId}/checklistItems/{checklistItemId}
-     * @allow (get) The checklist owner reading an item on their checklist.
-     * @deny (create) A user trying to add an item to a checklist they do not own.
-     * @principle Enforces inherited permissions, where access to a subcollection document is determined by permissions on its parent.
+     * @description Manages individual items within a checklist. These are not stored as separate documents.
+     * @principle This path is not used as checklist items are embedded in the checklist document.
      */
-    match /vehicles/{vehicleId}/checklists/{checklistsId}/checklistItems/{checklistItemId} {
-      allow get: if isExistingDoc() && canAccessChecklist(vehicleId, checklistsId);
-      allow list: if canAccessChecklist(vehicleId, checklistsId);
-      allow create: if canAccessChecklist(vehicleId, checklistsId) && request.resource.data.checklistId == checklistsId && request.resource.data.id == checklistItemId;
-      allow update: if isExistingDoc() && canAccessChecklist(vehicleId, checklistsId) && request.resource.data.checklistId == resource.data.checklistId;
-      allow delete: if isExistingDoc() && canAccessChecklist(vehicleId, checklistsId);
-    }
+    // This path is intentionally left without rules as items are part of the checklists document.
   }
 }
