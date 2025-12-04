@@ -1,0 +1,157 @@
+/**
+ * Core Philosophy:
+ * This ruleset establishes a hybrid security model for the Rota Certa application.
+ * It combines strict user-ownership for personal data with a role-based system for shared resources.
+ * User profiles are private to each individual. Vehicles are public to all authenticated users for reading,
+ * but can only be managed by 'admin' users. Checklists and their items are owned by the 'driver' who
+ * creates them, but can also be overseen by 'admins'.
+ *
+ * Data Structure:
+ * - /users/{userId}: Private user profile documents.
+ * - /vehicles/{vehicleId}: A top-level collection of all vehicles in the system.
+ * - /vehicles/{vehicleId}/checklists/{checklistId}: Subcollection for checklists related to a specific vehicle.
+ * - /vehicles/{vehicleId}/checklists/{checklistId}/checklistItems/{checklistItemId}: Subcollection for items on a specific checklist.
+ *
+ * Key Security Decisions:
+ * - Admin Role Check: Since authorization roles ('admin', 'driver') are stored on the /users/{userId} document,
+ *   rules for administrative actions (like modifying vehicles) must perform a `get()` operation on the user's
+ *   profile to verify their role. This is a deliberate trade-off for security and centralization of roles.
+ * - User Listing Disabled: To protect user privacy, it is not possible to list all documents in the `/users` collection.
+ * - Public Vehicle Listing: Any authenticated user can list and view vehicle details, allowing drivers to select
+ *   from available vehicles. However, only admins can modify the vehicle list.
+ * - Creator Ownership for Checklists: The user who creates a checklist is its owner and has full control over it.
+ *   Admins have override privileges to view and manage any checklist.
+ *
+ * Denormalization for Authorization:
+ * The `Checklist` document contains a denormalized `userId` field. This is critical for security, as it allows rules
+ * to verify ownership directly on the document without needing extra database reads, resulting in faster and more
+ * secure operations.
+ *
+ * Structural Segregation:
+ * The data is segregated into distinct collections (/users, /vehicles). This clear separation ensures that security
+ * rules are simple and that queries for public data (vehicles) do not accidentally expose private data (user profiles).
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    
+    /**
+     * Returns true if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the authenticated user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if a document currently exists. Used to secure all update and delete
+     * operations, preventing modifications to non-existent data.
+     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+
+    /**
+     * Checks if the requesting user has the 'admin' role.
+     * This performs a document read and should be used for high-privilege actions.
+     */
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+    
+    /**
+     * Validates that the user is the creator of a new document.
+     * Ensures the 'userId' field on a new document matches the creator's auth UID.
+     */
+    function isCreator(docData) {
+      return docData.userId == request.auth.uid;
+    }
+    
+    /**
+     * Validates that critical relational IDs are not changed during an update.
+     */
+    function relationalIdsAreImmutable() {
+      return request.resource.data.id == resource.data.id
+          && request.resource.data.vehicleId == resource.data.vehicleId
+          && request.resource.data.userId == resource.data.userId;
+    }
+
+    /**
+     * Checks if the current user has permission to access a checklist, either as its
+     * owner or as an admin.
+     */
+    function canAccessChecklist(vehicleId, checklistsId) {
+      let checklist = get(/databases/$(database)/documents/vehicles/$(vehicleId)/checklists/$(checklistsId));
+      return isOwner(checklist.data.userId) || isAdmin();
+    }
+    
+    /**
+     * @description Manages user profile data. Only the user themselves can create, view, or edit their own profile.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user creating their own user document for the first time: `auth.uid == 'user_abc'`, `path == /users/user_abc`.
+     * @deny (get) A user trying to read another user's profile: `auth.uid == 'user_123'`, `path == /users/user_xyz`.
+     * @principle Restricts access to a user's own data tree, enforcing privacy and data ownership.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && isExistingDoc();
+      allow delete: if isOwner(userId) && isExistingDoc();
+    }
+    
+    /**
+     * @description Manages vehicle data. Any authenticated user can read vehicle info, but only admins can create, update, or delete vehicles.
+     * @path /vehicles/{vehicleId}
+     * @allow (get) An authenticated driver viewing a vehicle's details: `auth.uid != null`, `path == /vehicles/vehicle_123`.
+     * @deny (create) A non-admin driver trying to add a new vehicle to the fleet.
+     * @principle Implements a role-based access model for shared resources, separating read and write permissions.
+     */
+    match /vehicles/{vehicleId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin() && request.resource.data.id == vehicleId;
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+    
+    /**
+     * @description Manages vehicle checklists. A user can create checklists for any vehicle, but can only modify checklists they created. Admins have full access.
+     * @path /vehicles/{vehicleId}/checklists/{checklistsId}
+     * @allow (create) An authenticated driver creating a new checklist for a vehicle: `auth.uid != null` and the new document has `userId` set to their UID.
+     * @deny (update) A driver trying to modify a checklist created by another driver.
+     * @principle Enforces document ownership for writes, while allowing admins to manage any record. Validates relational integrity on create.
+     */
+    match /vehicles/{vehicleId}/checklists/{checklistsId} {
+      allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.vehicleId == vehicleId && request.resource.data.id == checklistsId;
+      allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable();
+      allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
+    }
+    
+    /**
+     * @description Manages individual items within a checklist. Access is inherited from the parent checklist.
+     * @path /vehicles/{vehicleId}/checklists/{checklistsId}/checklistItems/{checklistItemId}
+     * @allow (get) The checklist owner reading an item on their checklist.
+     * @deny (create) A user trying to add an item to a checklist they do not own.
+     * @principle Enforces inherited permissions, where access to a subcollection document is determined by permissions on its parent.
+     */
+    match /vehicles/{vehicleId}/checklists/{checklistsId}/checklistItems/{checklistItemId} {
+      allow get: if isExistingDoc() && canAccessChecklist(vehicleId, checklistsId);
+      allow list: if canAccessChecklist(vehicleId, checklistsId);
+      allow create: if canAccessChecklist(vehicleId, checklistsId) && request.resource.data.checklistId == checklistsId && request.resource.data.id == checklistItemId;
+      allow update: if isExistingDoc() && canAccessChecklist(vehicleId, checklistsId) && request.resource.data.checklistId == resource.data.checklistId;
+      allow delete: if isExistingDoc() && canAccessChecklist(vehicleId, checklistsId);
+    }
+  }
+}
