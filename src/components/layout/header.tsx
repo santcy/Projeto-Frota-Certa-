@@ -16,13 +16,16 @@ import { useAuth } from '@/context/auth-context';
 import { useAuth as useFirebaseAuth } from '@/firebase'; // Firebase auth instance
 import { Skeleton } from '@/components/ui/skeleton';
 import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export function Header() {
   const { user, isUserLoading } = useAuth();
   const auth = useFirebaseAuth();
+  const router = useRouter();
 
-  const handleLogout = () => {
-    signOut(auth);
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
   };
 
   if (isUserLoading) {

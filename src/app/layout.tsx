@@ -7,6 +7,7 @@ import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import { AuthProvider } from '@/context/auth-context';
+import { AuthGuard } from '@/components/auth/auth-guard';
 
 export const metadata: Metadata = {
   title: 'Rota Certa - Gerenciamento de Frotas',
@@ -32,19 +33,21 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
           <AuthProvider>
-            <SidebarProvider>
-              <div className="flex min-h-screen">
-                <Sidebar>
-                  <SidebarNav />
-                </Sidebar>
-                <div className="flex flex-1 flex-col">
-                  <Header />
-                  <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8">
-                    {children}
-                  </main>
+            <AuthGuard>
+              <SidebarProvider>
+                <div className="flex min-h-screen">
+                  <Sidebar>
+                    <SidebarNav />
+                  </Sidebar>
+                  <div className="flex flex-1 flex-col">
+                    <Header />
+                    <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8">
+                      {children}
+                    </main>
+                  </div>
                 </div>
-              </div>
-            </SidebarProvider>
+              </SidebarProvider>
+            </AuthGuard>
           </AuthProvider>
         </FirebaseClientProvider>
         <Toaster />

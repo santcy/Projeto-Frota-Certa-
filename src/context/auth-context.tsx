@@ -1,7 +1,9 @@
 'use client';
 import { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useUser } from '@/firebase'; // Using the hook from Firebase setup
+import { useUser, useDoc, useMemoFirebase } from '@/firebase'; // Using the hook from Firebase setup
 import type { User as FirebaseUser } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 
 export type UserRole = 'admin' | 'driver';
 
@@ -20,29 +22,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// A simple mock function to determine role. In a real app, this would come
-// from a user's profile in Firestore or from custom claims.
-function getRoleFromUser(user: FirebaseUser | null): UserRole {
-  // For demonstration, let's make a specific email an admin.
-  if (user?.email === 'admin@rotacerta.com') {
-    return 'admin';
-  }
-  // All other authenticated users are drivers.
-  return 'driver';
-}
-
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user: firebaseUser, isUserLoading } = useUser();
+  const { user: firebaseUser, isUserLoading: isAuthLoading } = useUser();
+  const { firestore } = useFirebase();
 
-  // Create an enriched AppUser object.
+  const userDocRef = useMemoFirebase(
+    () => (firestore && firebaseUser ? doc(firestore, 'users', firebaseUser.uid) : null),
+    [firestore, firebaseUser]
+  );
+  
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{userType: UserRole, name: string}>(userDocRef);
+
+  const isUserLoading = isAuthLoading || isProfileLoading;
+
   const appUser: AppUser | null = useMemo(() => {
     if (!firebaseUser) return null;
     
-    // In a real app, you would fetch the user's profile from Firestore
-    // to get their name and role. For now, we'll derive it.
-    const name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário';
-    const role = getRoleFromUser(firebaseUser);
+    const role = userProfile?.userType || 'driver';
+    const name = userProfile?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário';
 
     return {
       uid: firebaseUser.uid,
@@ -51,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       firebaseUser,
     };
-  }, [firebaseUser]);
+  }, [firebaseUser, userProfile]);
 
   const value = {
     user: appUser,
