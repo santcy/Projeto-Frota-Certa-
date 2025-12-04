@@ -5,6 +5,7 @@ import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
 import { Header } from '@/components/layout/header';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/context/auth-context';
 
 export const metadata: Metadata = {
   title: 'Rota Certa - Gerenciamento de Frotas',
@@ -28,19 +29,21 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <SidebarProvider>
-          <div className="flex min-h-screen">
-            <Sidebar>
-              <SidebarNav />
-            </Sidebar>
-            <div className="flex flex-1 flex-col">
-              <Header />
-              <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8">
-                {children}
-              </main>
+        <AuthProvider>
+          <SidebarProvider>
+            <div className="flex min-h-screen">
+              <Sidebar>
+                <SidebarNav />
+              </Sidebar>
+              <div className="flex flex-1 flex-col">
+                <Header />
+                <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
-        </SidebarProvider>
+          </SidebarProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

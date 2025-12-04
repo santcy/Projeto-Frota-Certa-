@@ -10,7 +10,6 @@ import {
   Truck,
   Wrench,
 } from 'lucide-react';
-
 import {
   SidebarHeader,
   SidebarMenu,
@@ -22,18 +21,22 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useAuth, UserRole } from '@/context/auth-context';
 
-const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/vehicles', label: 'Veículos', icon: Truck },
-  { href: '/reports', label: 'Relatórios', icon: FileText },
-  { href: '/checklist', label: 'Novo Checklist', icon: ClipboardCheck },
-  { href: '/vehicles/new', label: 'Cadastrar Veículo', icon: PlusCircle },
+const allNavItems = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+  { href: '/vehicles', label: 'Veículos', icon: Truck, roles: ['admin'] },
+  { href: '/reports', label: 'Relatórios', icon: FileText, roles: ['admin'] },
+  { href: '/checklist', label: 'Novo Checklist', icon: ClipboardCheck, roles: ['admin', 'driver'] },
+  { href: '/vehicles/new', label: 'Cadastrar Veículo', icon: PlusCircle, roles: ['admin'] },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { open } = useSidebar();
+  const { user } = useAuth();
+
+  const navItems = allNavItems.filter(item => user && item.roles.includes(user.role));
 
   return (
     <>
