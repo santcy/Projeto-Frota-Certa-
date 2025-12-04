@@ -3,9 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,13 +19,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Send } from 'lucide-react';
-import { useFirebase, setDocumentNonBlocking } from '@/firebase';
+import { Check, Edit, Send } from 'lucide-react';
+import { useFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, WithId } from '@/firebase';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
+import type { Vehicle } from '@/lib/types';
+
 
 const formSchema = z.object({
   plate: z
@@ -33,8 +34,8 @@ const formSchema = z.object({
     .min(7, 'A placa deve ter no mínimo 7 caracteres.')
     .max(8, 'A placa deve ter no máximo 8 caracteres.')
     .trim(),
-  model: z.string().min(2, 'O modelo é obrigatório.').trim(),
   make: z.string().min(2, 'A marca é obrigatória.').trim(),
+  model: z.string().min(2, 'O modelo é obrigatório.').trim(),
   image: z.string().url('Selecione uma imagem válida.'),
 });
 
@@ -42,11 +43,17 @@ type FormValues = z.infer<typeof formSchema>;
 
 const vehicleImages = PlaceHolderImages.filter(img => img.imageHint.includes('van'));
 
-export function VehicleForm() {
+interface VehicleFormProps {
+  vehicle?: WithId<Vehicle>;
+}
+
+export function VehicleForm({ vehicle }: VehicleFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const { firestore } = useFirebase();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const isEditing = !!vehicle;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -57,6 +64,17 @@ export function VehicleForm() {
       image: vehicleImages[0]?.imageUrl || '',
     },
   });
+
+  useEffect(() => {
+    if (vehicle) {
+      form.reset({
+        plate: vehicle.plate,
+        make: vehicle.make,
+        model: vehicle.model,
+        image: vehicle.image || vehicleImages[0]?.imageUrl || '',
+      });
+    }
+  }, [vehicle, form]);
 
   async function onSubmit(data: FormValues) {
     if (!firestore) {
@@ -69,34 +87,45 @@ export function VehicleForm() {
     }
 
     setIsSubmitting(true);
+
+    if (isEditing) {
+      // Update existing vehicle
+      const vehicleRef = doc(firestore, 'vehicles', vehicle.id);
+      updateDocumentNonBlocking(vehicleRef, data);
+       toast({
+        title: 'Veículo Atualizado!',
+        description: `O veículo ${data.plate} foi atualizado com sucesso.`,
+        action: <Check className="h-5 w-5 text-green-500" />,
+      });
+      setTimeout(() => {
+        router.push(`/vehicles/${vehicle.id}`);
+        router.refresh();
+      }, 1000);
+
+    } else {
+      // Create new vehicle
+      const vehicleRef = doc(collection(firestore, 'vehicles'));
+      const newVehicle = {
+        ...data,
+        id: vehicleRef.id,
+        status: 'Operacional',
+        fuelLevel: 100,
+        odometer: 0,
+      };
+
+      setDocumentNonBlocking(vehicleRef, newVehicle, {});
+       toast({
+        title: 'Veículo Cadastrado!',
+        description: `O veículo ${data.plate} foi adicionado com sucesso.`,
+        action: <Check className="h-5 w-5 text-green-500" />,
+      });
+       setTimeout(() => {
+        router.push('/vehicles');
+        router.refresh();
+      }, 1000);
+    }
     
-    // Create a new document reference with a generated ID
-    const vehicleRef = doc(collection(firestore, 'vehicles'));
-
-    const newVehicle = {
-      ...data,
-      id: vehicleRef.id,
-      status: 'Operacional',
-      fuelLevel: 100,
-      odometer: 0,
-    };
-
-    setDocumentNonBlocking(vehicleRef, newVehicle, {});
-
-    // Optimistic UI update
-    toast({
-      title: 'Veículo Cadastrado!',
-      description: `O veículo ${data.model} (${data.plate}) foi adicionado com sucesso.`,
-      action: <Check className="h-5 w-5 text-green-500" />,
-    });
-
     setIsSubmitting(false);
-
-    // Redirect to the vehicles list page after a short delay
-    setTimeout(() => {
-      router.push('/vehicles');
-      router.refresh(); // Forces a refresh to show the new vehicle
-    }, 1000);
   }
 
   return (
@@ -203,8 +232,8 @@ export function VehicleForm() {
             </>
           ) : (
             <>
-              <Send className="mr-2 h-4 w-4" />
-              Salvar Veículo
+             {isEditing ? <Edit className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
+             {isEditing ? 'Salvar Alterações' : 'Cadastrar Veículo'}
             </>
           )}
         </Button>

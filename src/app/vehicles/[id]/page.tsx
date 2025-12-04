@@ -1,5 +1,5 @@
 'use client';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -22,7 +22,7 @@ import {
   type Vehicle,
   type Checklist,
 } from '@/lib/types';
-import { CheckCircle2, XCircle, CircleSlash, Download } from 'lucide-react';
+import { CheckCircle2, XCircle, CircleSlash, Download, Edit } from 'lucide-react';
 import {
   useDoc,
   useCollection,
@@ -35,6 +35,7 @@ import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Link from 'next/link';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -54,9 +55,12 @@ function getItemStatusIcon(status: ChecklistItemStatus) {
 function VehicleDetailsSkeleton() {
   return (
     <div className="space-y-6">
-      <div>
-        <Skeleton className="h-8 w-72" />
-        <Skeleton className="mt-2 h-5 w-48" />
+      <div className="flex justify-between items-center">
+        <div>
+          <Skeleton className="h-8 w-72" />
+          <Skeleton className="mt-2 h-5 w-48" />
+        </div>
+        <Skeleton className="h-10 w-32" />
       </div>
       <Card>
         <CardHeader>
@@ -76,6 +80,7 @@ function VehicleDetailsSkeleton() {
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
   const { firestore } = useFirebase();
   const { user } = useAuth();
+  const router = useRouter();
 
   const vehicleRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'vehicles', params.id) : null),
@@ -169,11 +174,21 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Detalhes do Veículo: {vehicle.plate}
-        </h1>
-        <p className="text-muted-foreground">{vehicle.model}</p>
+       <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Detalhes do Veículo: {vehicle.plate}
+          </h1>
+          <p className="text-muted-foreground">{vehicle.model}</p>
+        </div>
+        {user?.role === 'admin' && (
+          <Button asChild>
+            <Link href={`/vehicles/${vehicle.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar Veículo
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>
