@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/auth-context';
 import type { Vehicle } from '@/lib/types';
+import React from 'react';
 
 
 function EditVehicleSkeleton() {
@@ -48,7 +49,8 @@ function EditVehicleSkeleton() {
 }
 
 
-export default function EditVehiclePage({ params: { id } }: { params: { id: string } }) {
+export default function EditVehiclePage({ params }: { params: { id: string } }) {
+  const { id } = React.use(params);
   const { firestore } = useFirebase();
   const { user } = useAuth();
   

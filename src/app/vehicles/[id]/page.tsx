@@ -36,6 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Link from 'next/link';
+import React from 'react';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -77,7 +78,8 @@ function VehicleDetailsSkeleton() {
   );
 }
 
-export default function VehicleDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function VehicleDetailPage({ params }: { params: { id: string } }) {
+  const { id } = React.use(params);
   const { firestore } = useFirebase();
   const { user } = useAuth();
   const router = useRouter();
