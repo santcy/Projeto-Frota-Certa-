@@ -78,11 +78,12 @@ export default function Dashboard() {
     const baseQuery = collection(firestore, 'checklists');
     
     // Admins see all recent checklists, drivers see only their own
-    const userSpecificQuery = user.role === 'admin'
-      ? query(baseQuery, orderBy('date', 'desc'), limit(50)) // Admins query recent checklists broadly
-      : query(baseQuery, where('userId', '==', user.uid), orderBy('date', 'desc'), limit(5));
+    if (user.role === 'admin') {
+      return query(baseQuery, orderBy('date', 'desc'), limit(50));
+    }
+    
+    return query(baseQuery, where('userId', '==', user.uid), orderBy('date', 'desc'), limit(5));
       
-    return userSpecificQuery;
   }, [firestore, user]);
 
   const { data: recentChecklists, isLoading: isLoadingChecklists } =
