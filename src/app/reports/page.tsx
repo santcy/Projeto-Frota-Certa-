@@ -78,6 +78,8 @@ export default function ReportsPage() {
       headStyles: { fillColor: [30, 58, 138] },
     });
     
+    let finalY = (doc as any).lastAutoTable.finalY;
+
     const checklistBody = [];
 
     for (const [sectionKey, sectionName] of Object.entries(CHECKLIST_ITEMS_SECTIONS)) {
@@ -94,22 +96,58 @@ export default function ReportsPage() {
     }
 
     doc.autoTable({
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: finalY + 10,
       head: [['Item', 'Status']],
       body: checklistBody,
       theme: 'grid',
       headStyles: { fillColor: [30, 58, 138] },
     });
+    
+    finalY = (doc as any).lastAutoTable.finalY;
 
     if (checklist.notes) {
       doc.autoTable({
-        startY: (doc as any).lastAutoTable.finalY + 10,
+        startY: finalY + 10,
         head: [['OBSERVAÇÕES']],
         body: [[checklist.notes]],
         theme: 'striped',
         headStyles: { fillColor: [30, 58, 138] },
       });
+      finalY = (doc as any).lastAutoTable.finalY;
     }
+
+    // Add photos
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text('Fotos do Checklist', 14, 20);
+    
+    const photos = [
+      { title: 'Painel', url: checklist.dashboardPhotoUrl },
+      { title: 'Frente', url: checklist.frontPhotoUrl },
+      { title: 'Traseira', url: checklist.backPhotoUrl },
+      { title: 'Lado Esquerdo', url: checklist.leftSidePhotoUrl },
+      { title: 'Lado Direito', url: checklist.rightSidePhotoUrl },
+    ];
+    
+    let photoY = 30;
+    photos.forEach((photo, index) => {
+      if (photo.url) {
+        if (photoY > 220) { // check for page break
+          doc.addPage();
+          photoY = 20;
+        }
+        doc.setFontSize(12);
+        doc.text(photo.title, 14, photoY);
+        try {
+          doc.addImage(photo.url, 'JPEG', 14, photoY + 5, 80, 60);
+        } catch (e) {
+          console.error(`Error adding image to PDF for ${photo.title}:`, e);
+          doc.text('Erro ao carregar imagem', 14, photoY + 20);
+        }
+        photoY += 75; // Y position for next image
+      }
+    });
+
 
     doc.save(`checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.pdf`);
   };

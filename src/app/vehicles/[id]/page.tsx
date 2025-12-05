@@ -37,6 +37,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Link from 'next/link';
 import React from 'react';
+import Image from 'next/image';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -130,6 +131,8 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
       headStyles: { fillColor: [30, 58, 138] },
     });
     
+    let finalY = (doc as any).lastAutoTable.finalY;
+
     const checklistBody = [];
 
     for (const [sectionKey, sectionName] of Object.entries(CHECKLIST_ITEMS_SECTIONS)) {
@@ -146,22 +149,57 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     }
 
     doc.autoTable({
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: finalY + 10,
       head: [['Item', 'Status']],
       body: checklistBody,
       theme: 'grid',
       headStyles: { fillColor: [30, 58, 138] },
     });
+    
+    finalY = (doc as any).lastAutoTable.finalY;
 
     if (checklist.notes) {
       doc.autoTable({
-        startY: (doc as any).lastAutoTable.finalY + 10,
+        startY: finalY + 10,
         head: [['OBSERVAÇÕES']],
         body: [[checklist.notes]],
         theme: 'striped',
         headStyles: { fillColor: [30, 58, 138] },
       });
+      finalY = (doc as any).lastAutoTable.finalY;
     }
+
+    // Add photos
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text('Fotos do Checklist', 14, 20);
+    
+    const photos = [
+      { title: 'Painel', url: checklist.dashboardPhotoUrl },
+      { title: 'Frente', url: checklist.frontPhotoUrl },
+      { title: 'Traseira', url: checklist.backPhotoUrl },
+      { title: 'Lado Esquerdo', url: checklist.leftSidePhotoUrl },
+      { title: 'Lado Direito', url: checklist.rightSidePhotoUrl },
+    ];
+    
+    let photoY = 30;
+    photos.forEach((photo, index) => {
+      if (photo.url) {
+        if (photoY > 220) { // check for page break
+          doc.addPage();
+          photoY = 20;
+        }
+        doc.setFontSize(12);
+        doc.text(photo.title, 14, photoY);
+        try {
+          doc.addImage(photo.url, 'JPEG', 14, photoY + 5, 80, 60);
+        } catch (e) {
+          console.error(`Error adding image to PDF for ${photo.title}:`, e);
+          doc.text('Erro ao carregar imagem', 14, photoY + 20);
+        }
+        photoY += 75; // Y position for next image
+      }
+    });
 
     doc.save(`checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.pdf`);
   };
@@ -173,6 +211,14 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   if (!vehicle) {
     notFound();
   }
+
+  const photoFields: { key: keyof Checklist; label: string }[] = [
+    { key: 'dashboardPhotoUrl', label: 'Foto do Painel' },
+    { key: 'frontPhotoUrl', label: 'Frente do Veículo' },
+    { key: 'backPhotoUrl', label: 'Traseira do Veículo' },
+    { key: 'leftSidePhotoUrl', label: 'Lado Esquerdo' },
+    { key: 'rightSidePhotoUrl', label: 'Lado Direito' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -236,48 +282,70 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4">
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {checklist.notes && (
                         <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-700/50">
                           <strong>Observações:</strong> {checklist.notes}
                         </div>
                       )}
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(
-                          ([sectionKey, sectionName]) => {
-                            const sectionItems =
-                              CHECKLIST_ITEMS[
-                                sectionKey as keyof typeof CHECKLIST_ITEMS
-                              ];
-                            const relevantItems = sectionItems.filter(
-                              (item) => checklist.items[item.id]
-                            );
 
-                            if (relevantItems.length === 0) return null;
+                      <div>
+                        <h4 className="mb-4 font-semibold text-lg">Itens Verificados</h4>
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                          {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(
+                            ([sectionKey, sectionName]) => {
+                              const sectionItems =
+                                CHECKLIST_ITEMS[
+                                  sectionKey as keyof typeof CHECKLIST_ITEMS
+                                ];
+                              const relevantItems = sectionItems.filter(
+                                (item) => checklist.items[item.id]
+                              );
 
-                            return (
-                              <div key={sectionKey}>
-                                <h4 className="mb-2 font-semibold">
-                                  {sectionName}
-                                </h4>
-                                <ul className="space-y-2">
-                                  {relevantItems.map((item) => (
-                                    <li
-                                      key={item.id}
-                                      className="flex items-center justify-between text-sm"
-                                    >
-                                      <span>{item.label}</span>
-                                      {getItemStatusIcon(
-                                        checklist.items[item.id]
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
-                          }
-                        )}
+                              if (relevantItems.length === 0) return null;
+
+                              return (
+                                <div key={sectionKey}>
+                                  <h5 className="mb-2 font-semibold">
+                                    {sectionName}
+                                  </h5>
+                                  <ul className="space-y-2">
+                                    {relevantItems.map((item) => (
+                                      <li
+                                        key={item.id}
+                                        className="flex items-center justify-between text-sm"
+                                      >
+                                        <span>{item.label}</span>
+                                        {getItemStatusIcon(
+                                          checklist.items[item.id]
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
                       </div>
+
+                      <div>
+                        <h4 className="mb-4 font-semibold text-lg">Fotos</h4>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {photoFields.map(({ key, label }) => {
+                                const photoUrl = checklist[key] as string | undefined;
+                                return photoUrl ? (
+                                <div key={key}>
+                                    <p className="text-sm font-medium mb-2">{label}</p>
+                                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                                        <Image src={photoUrl} alt={label} layout="fill" objectFit="cover" />
+                                    </div>
+                                </div>
+                                ) : null;
+                            })}
+                        </div>
+                      </div>
+
                       {user?.role === 'admin' && (
                         <div className="pt-4 flex justify-end">
                           <Button 
