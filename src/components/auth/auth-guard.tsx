@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
-const protectedRoutes = ['/', '/vehicles', '/reports', '/checklist/light', '/checklist/heavy']; // Routes that require authentication
+const protectedRoutes = ['/dashboard', '/vehicles', '/reports', '/checklist/light', '/checklist/heavy']; // Routes that require authentication
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useAuth();
@@ -21,13 +21,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     if (user && pathname === '/login') {
-        router.push('/');
+        router.push('/dashboard');
     }
+    
+    if (user && pathname === '/') {
+        router.push('/dashboard');
+    }
+
 
   }, [user, isUserLoading, router, pathname]);
 
   // While loading, or if unauthenticated on a protected route, show a loader
-  if (isUserLoading && protectedRoutes.includes(pathname)) {
+  if (isUserLoading && protectedRoutes.some(route => pathname.startsWith(route))) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -36,7 +41,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // If user is not logged in and it's a protected route, we return null because the useEffect is already handling the redirect.
-  if (!user && protectedRoutes.includes(pathname)) {
+  if (!user && protectedRoutes.some(route => pathname.startsWith(route))) {
     return null;
   }
   

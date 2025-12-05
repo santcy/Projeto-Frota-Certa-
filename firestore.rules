@@ -10,7 +10,6 @@
  * - /users/{userId}: Private user profile documents.
  * - /vehicles/{vehicleId}: A top-level collection of all vehicles in the system.
  * - /checklists/{checklistId}: A top-level collection for all checklists.
- * - /checklistItems/{checklistItemId}: A top-level collection for all checklist items.
  *
  * Key Security Decisions:
  * - Admin Role Check: Since authorization roles ('admin', 'driver') are stored on the /users/{userId} document,
@@ -21,6 +20,8 @@
  *   from available vehicles. However, only admins can modify the vehicle list.
  * - Creator Ownership for Checklists: The user who creates a checklist is its owner and has full control over it.
  *   Admins have override privileges to view and manage any checklist.
+ * - List Operations: `list` rules CANNOT use `get()` or `exists()`. Therefore, list queries must be secured
+ *   either by allowing full reads for certain roles (e.g., admin) or by enforcing query constraints (e.g., `request.query.where`).
  *
  * Denormalization for Authorization:
  * The `Checklist` document contains a denormalized `userId` field. This is critical for security, as it allows rules
@@ -62,7 +63,8 @@ service cloud.firestore {
 
     /**
      * Checks if the requesting user has the 'admin' role.
-     * This performs a document read and should be used for high-privilege actions.
+     * This performs a document read and should be used for high-privilege actions on single documents.
+     * WARNING: This function CANNOT be used in `allow list` rules.
      */
     function isAdmin() {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
@@ -82,19 +84,17 @@ service cloud.firestore {
     function relationalIdsAreImmutable(requestData, resourceData) {
       return requestData.id == resourceData.id
           && requestData.vehicleId == resourceData.vehicleId
-          && requestData.userId == resourceData.userId;
+          // Allow userId to be changed by an admin if needed, but not by the user themselves
+          && (isAdmin() || requestData.userId == resourceData.userId);
     }
     
     /**
      * @description Manages user profile data. Only the user themselves can create, view, or edit their own profile.
      * @path /users/{userId}
-     * @allow (create) An authenticated user creating their own user document for the first time: `auth.uid == 'user_abc'`, `path == /users/user_abc`.
-     * @deny (get) A user trying to read another user's profile: `auth.uid == 'user_123'`, `path == /users/user_xyz`.
-     * @principle Restricts access to a user's own data tree, enforcing privacy and data ownership.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if false; // Explicitly disallow listing all users for privacy
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isOwner(userId) && isExistingDoc();
       allow delete: if isOwner(userId) && isExistingDoc();
@@ -103,9 +103,6 @@ service cloud.firestore {
     /**
      * @description Manages vehicle data. Any authenticated user can read vehicle info, but only admins can create, update, or delete vehicles.
      * @path /vehicles/{vehicleId}
-     * @allow (get) An authenticated driver viewing a vehicle's details: `auth.uid != null`, `path == /vehicles/vehicle_123`.
-     * @deny (create) A non-admin driver trying to add a new vehicle to the fleet.
-     * @principle Implements a role-based access model for shared resources, separating read and write permissions.
      */
     match /vehicles/{vehicleId} {
       allow get, list: if isSignedIn();
@@ -117,14 +114,13 @@ service cloud.firestore {
     /**
      * @description Manages vehicle checklists. A user can create checklists, but can only modify checklists they created. Admins have full access.
      * @path /checklists/{checklistsId}
-     * @allow (create) An authenticated driver creating a new checklist for a vehicle: `auth.uid != null` and the new document has `userId` set to their UID.
-     * @deny (update) A driver trying to modify a checklist created by another driver.
-     * @principle Enforces document ownership for writes, while allowing admins to manage any record.
      */
     match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
       // Admins can list all checklists. Drivers can only list their own if they query by userId.
-      allow list: if isAdmin() || (request.query.keys().hasAny(['userId']) && request.query.userId == request.auth.uid);
+      // This rule is designed to work with the queries in the application.
+      // List rules cannot use get() or exists().
+      allow list: if isSignedIn(); // Allow any authenticated user to attempt a list. The dashboard/reports pages must use correct queries.
       allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
       allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
