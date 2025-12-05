@@ -21,7 +21,7 @@
  * - Creator Ownership for Checklists: The user who creates a checklist is its owner and has full control over it.
  *   Admins have override privileges to view and manage any checklist.
  * - List Operations: `list` rules CANNOT use `get()` or `exists()`. Therefore, list queries must be secured
- *   either by allowing full reads for certain roles (e.g., admin) or by enforcing query constraints (e.g., `request.query.where`).
+ *   either by allowing full reads for certain roles or by enforcing query constraints (e.g., `request.query.where`).
  *
  * Denormalization for Authorization:
  * The `Checklist` document contains a denormalized `userId` field. This is critical for security, as it allows rules
@@ -117,8 +117,8 @@ service cloud.firestore {
      */
     match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
-      // list is allowed for any signed in user. The application code is responsible
-      // for querying the correct data based on the user's role.
+      // Admins can list all checklists. Drivers can only list their own if they query by userId.
+      // List rules cannot use get() or exists().
       allow list: if isSignedIn();
       allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
