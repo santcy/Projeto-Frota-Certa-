@@ -108,8 +108,7 @@ service cloud.firestore {
      * @principle Implements a role-based access model for shared resources, separating read and write permissions.
      */
     match /vehicles/{vehicleId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create: if isAdmin() && request.resource.data.id == vehicleId;
       allow update: if isAdmin() && isExistingDoc();
       allow delete: if isAdmin() && isExistingDoc();
@@ -125,7 +124,7 @@ service cloud.firestore {
     match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
       // Admins can list all checklists. Drivers can only list their own if they query by userId.
-      allow list: if isAdmin();
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
       allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
