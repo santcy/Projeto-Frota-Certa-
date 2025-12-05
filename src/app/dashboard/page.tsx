@@ -79,10 +79,10 @@ export default function Dashboard() {
     
     // Admins see all recent checklists, drivers see only their own
     const userSpecificQuery = user.role === 'admin'
-      ? baseQuery
-      : query(baseQuery, where('userId', '==', user.uid));
+      ? query(baseQuery, orderBy('date', 'desc'), limit(50)) // Admins query recent checklists broadly
+      : query(baseQuery, where('userId', '==', user.uid), orderBy('date', 'desc'), limit(5));
       
-    return query(userSpecificQuery, orderBy('date', 'desc'), limit(5));
+    return userSpecificQuery;
   }, [firestore, user]);
 
   const { data: recentChecklists, isLoading: isLoadingChecklists } =
@@ -102,7 +102,7 @@ export default function Dashboard() {
     );
   };
   
-  const recentAlerts = recentChecklists?.filter(hasIssues);
+  const recentAlerts = recentChecklists?.filter(hasIssues).slice(0, 5);
 
 
   return (
