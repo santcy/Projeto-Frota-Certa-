@@ -8,7 +8,7 @@ export default function ChecklistPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Novo Checklist de Veículo</CardTitle>
           <CardDescription>
-            Preencha todos os campos para registrar a saída ou retorno do veículo.
+            Preencha todos os campos para registrar a vistoria do veículo.
           </CardDescription>
         </CardHeader>
         <CardContent>

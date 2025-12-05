@@ -1,0 +1,277 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Rota Certa application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "userType": {
+          "type": "string",
+          "description": "The type of user, either 'driver' or 'admin'."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "userType",
+        "name",
+        "email"
+      ]
+    },
+    "Vehicle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vehicle",
+      "type": "object",
+      "description": "Represents a vehicle in the Rota Certa application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Vehicle entity."
+        },
+        "licensePlate": {
+          "type": "string",
+          "description": "The license plate of the vehicle."
+        },
+        "model": {
+          "type": "string",
+          "description": "The model of the vehicle."
+        },
+        "make": {
+          "type": "string",
+          "description": "The make of the vehicle."
+        }
+      },
+      "required": [
+        "id",
+        "licensePlate",
+        "model",
+        "make"
+      ]
+    },
+    "Checklist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Checklist",
+      "type": "object",
+      "description": "Represents a checklist performed on a vehicle.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Checklist entity."
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Reference to Vehicle. (Relationship: Vehicle 1:N Checklist)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Checklist)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the vehicle was checked.",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Saída", "Retorno"]
+        },
+        "odometer": {
+          "type": "number",
+          "description": "The odometer reading when the vehicle was checked."
+        },
+        "status": {
+          "type": "string",
+          "description": "Overall status of the vehicle based on checklist (e.g., 'Good', 'Needs Maintenance')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes from the driver."
+        },
+        "checklistType": {
+          "type": "string",
+          "enum": ["pesada", "leve"]
+        },
+        "fuelLevelPhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "kmPhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "enginePhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "trunkPhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "frontPhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "backPhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "leftSidePhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "rightSidePhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "vehicleId",
+        "userId",
+        "date",
+        "type",
+        "odometer",
+        "checklistType"
+      ]
+    },
+    "ChecklistItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChecklistItem",
+      "type": "object",
+      "description": "Represents a single item on a vehicle checklist.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChecklistItem entity."
+        },
+        "checklistId": {
+          "type": "string",
+          "description": "Reference to Checklist. (Relationship: Checklist 1:N ChecklistItem)"
+        },
+        "itemType": {
+          "type": "string",
+          "description": "Type of checklist item (e.g., 'lights', 'fluids', 'equipment', 'cleanliness')."
+        },
+        "itemName": {
+          "type": "string",
+          "description": "The name of the item being checked (e.g., 'left headlight', 'oil level', 'tire pressure')."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the item."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes about the item."
+        }
+      },
+      "required": [
+        "id",
+        "checklistId",
+        "itemType",
+        "itemName",
+        "status"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership ensures only the user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vehicles/{vehicleId}",
+        "definition": {
+          "entityName": "Vehicle",
+          "schema": {
+            "$ref": "#/backend/entities/Vehicle"
+          },
+          "description": "Stores vehicle profiles. Includes denormalized user access roles to support authorization independence.",
+          "params": [
+            {
+              "name": "vehicleId",
+              "description": "The unique identifier for the vehicle."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vehicles/{vehicleId}/checklists/{checklistsId}",
+        "definition": {
+          "entityName": "Checklist",
+          "schema": {
+            "$ref": "#/backend/entities/Checklist"
+          },
+          "description": "Stores checklists associated with a specific vehicle. Nested under the vehicle to ensure easy retrieval and ownership.",
+          "params": [
+            {
+              "name": "vehicleId",
+              "description": "The unique identifier for the vehicle."
+            },
+            {
+              "name": "checklistsId",
+              "description": "The unique identifier for the checklists."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vehicles/{vehicleId}/checklists/{checklistsId}/checklistItems/{checklistItemId}",
+        "definition": {
+          "entityName": "ChecklistItem",
+          "schema": {
+            "$ref": "#/backend/entities/ChecklistItem"
+          },
+          "description": "Stores individual checklist items associated with a specific checklist. Nested under the checklist for easy retrieval and data integrity.",
+          "params": [
+            {
+              "name": "vehicleId",
+              "description": "The unique identifier for the vehicle."
+            },
+            {
+              "name": "checklistsId",
+              "description": "The unique identifier for the checklists."
+            },
+            {
+              "name": "checklistItemId",
+              "description": "The unique identifier for the checklist item."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to manage vehicle maintenance and checklists within the 'Rota Certa' application, focusing on security, scalability, and ease of debugging. The structure prioritizes authorization independence to avoid hierarchical `get()` calls in security rules, which can hinder atomic operations and complicate debugging.\n\nTo achieve Authorization Independence (Strategy A), the design denormalizes user roles into the vehicles collection. This allows for direct verification of a user's role without needing to fetch related user documents.\n\nStructural Segregation (Strategy B) is applied by dedicating specific collections for different data types. This ensures each collection has a homogeneous security posture.\n\nAccess Modeling (Strategy C) uses a combination of path-based ownership for user-related data and membership maps for collaborative data (if needed in future versions). The `/users/{userId}/vehicles/{vehicleId}` path establishes clear ownership for vehicles assigned to specific users.\n\nQAPs (Rules are not Filters) are supported through structural segregation, ensuring that list operations can be secured efficiently. The separation of user-owned vehicle data under `/users/{userId}/vehicles/{vehicleId}` allows for targeted list queries based on user identity.\n\nThe explicit modeling of vehicle and checklist states, combined with standardized naming conventions (Strategy D), enhances data clarity and predictability, which in turn simplifies security rule creation and maintenance."
+  }
+}

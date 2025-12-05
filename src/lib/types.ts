@@ -16,11 +16,14 @@ export interface Vehicle {
 
 export type ChecklistItemStatus = 'ok' | 'issue' | 'na';
 
-export interface ChecklistItem {
-  id: string;
-  label: string;
-  status: ChecklistItemStatus;
-}
+export type LightVehicleChecklistItemStatus =
+  | 'Em excelente estado'
+  | 'Desgastado'
+  | 'Incompleto'
+  | 'Feito'
+  | 'Pendente'
+  | 'Avariado'
+  | 'Manchado';
 
 export interface Checklist {
   id: string;
@@ -30,17 +33,29 @@ export interface Checklist {
   type: 'Saída' | 'Retorno';
   date: Timestamp;
   odometer: number;
-  fuelLevel: number;
-  items: Record<string, ChecklistItemStatus>;
+  items: Record<string, ChecklistItemStatus | LightVehicleChecklistItemStatus>;
   notes?: string;
-  dashboardPhotoUrl: string;
-  dashboardPhotoUrl2: string;
-  frontPhotoUrl: string;
-  backPhotoUrl: string;
-  leftSidePhotoUrl: string;
-  rightSidePhotoUrl: string;
+  checklistType: 'pesada' | 'leve'; // To distinguish between checklist types
+
+  // Heavy vehicle photos
+  dashboardPhotoUrl?: string;
+  dashboardPhotoUrl2?: string;
+  
+  // Light vehicle photos
+  fuelLevelPhotoUrl?: string;
+  kmPhotoUrl?: string;
+  enginePhotoUrl?: string;
+  trunkPhotoUrl?: string;
+
+  // Common photos
+  frontPhotoUrl?: string;
+  backPhotoUrl?: string;
+  leftSidePhotoUrl?: string;
+  rightSidePhotoUrl?: string;
 }
 
+
+// Heavy Fleet Checklist (Original)
 export const CHECKLIST_ITEMS_SECTIONS = {
   iluminacao: 'Iluminação',
   sinais: 'Sinais e Climatização',
@@ -113,4 +128,78 @@ export const CHECKLIST_ITEMS: Record<keyof typeof CHECKLIST_ITEMS_SECTIONS, { id
   ]
 };
 
-    
+// New Light Fleet Checklist
+export const CHECKLIST_ITEMS_SECTIONS_LEVE = {
+  pneus: 'Pneus',
+  interior: 'Interior do Veículo',
+  exterior: 'Exterior do Veículo',
+  capo: 'Verificação do Capô',
+  porta_malas: 'Itens do Porta-malas',
+};
+
+const lightFleetStatuses: LightVehicleChecklistItemStatus[] = [
+  'Em excelente estado',
+  'Desgastado',
+  'Incompleto',
+  'Feito',
+  'Pendente',
+  'Avariado',
+  'Manchado',
+];
+
+const tireStatuses: ('ok' | 'issue' | 'na')[] = ['ok', 'issue', 'na'];
+
+export const CHECKLIST_ITEMS_LEVE: Record<
+  keyof typeof CHECKLIST_ITEMS_SECTIONS_LEVE,
+  { id: string; label: string; statuses: string[] }
+> = {
+  pneus: [
+    { id: 'pneu_dianteiro_esquerdo', label: 'Pneu Dianteiro Esquerdo', statuses: tireStatuses },
+    { id: 'pneu_dianteiro_direito', label: 'Pneu Dianteiro Direito', statuses: tireStatuses },
+    { id: 'pneu_traseiro_esquerdo', label: 'Pneu Traseiro Esquerdo', statuses: tireStatuses },
+    { id: 'pneu_traseiro_direito', label: 'Pneu Traseiro Direito', statuses: tireStatuses },
+    { id: 'estepe_leve', label: 'Estepe', statuses: tireStatuses },
+  ],
+  interior: [
+    { id: 'extintor_incendio', label: 'Extintor de Incêndio', statuses: lightFleetStatuses },
+    { id: 'bancos_dianteiros', label: 'Bancos Dianteiros', statuses: lightFleetStatuses },
+    { id: 'bancos_traseiros', label: 'Bancos Traseiros', statuses: lightFleetStatuses },
+    { id: 'tapetes', label: 'Tapetes', statuses: lightFleetStatuses },
+    { id: 'radio_cd_dvd', label: 'Rádio (CD/DVD)', statuses: lightFleetStatuses },
+    { id: 'retirada_pertences', label: 'Retirada de Pertences Pessoais', statuses: lightFleetStatuses },
+    { id: 'documentos_veiculo', label: 'Documentos do Veículo', statuses: lightFleetStatuses },
+    { id: 'manual_proprietario', label: 'Manual do Proprietário', statuses: lightFleetStatuses },
+    { id: 'manual_garantia', label: 'Manual de Garantia', statuses: lightFleetStatuses },
+    { id: 'alarme', label: 'Alarme', statuses: lightFleetStatuses },
+    { id: 'acendedor_cigarro', label: 'Acendedor de Cigarro', statuses: lightFleetStatuses },
+    { id: 'teto_interno', label: 'Teto Interno', statuses: lightFleetStatuses },
+    { id: 'retrovisor_interno_leve', label: 'Retrovisor Interno', statuses: lightFleetStatuses },
+    { id: 'cinto_seguranca_leve', label: 'Cinto de Segurança', statuses: lightFleetStatuses },
+    { id: 'antena', label: 'Antena (interna/externa)', statuses: lightFleetStatuses },
+  ],
+  exterior: [
+    { id: 'calotas_dianteiras_esq', label: 'Calotas Dianteiras Esq.', statuses: lightFleetStatuses },
+    { id: 'calotas_dianteiras_dir', label: 'Calotas Dianteiras Dir.', statuses: lightFleetStatuses },
+    { id: 'calotas_traseiras_esq', label: 'Calotas Traseiras Esq.', statuses: lightFleetStatuses },
+    { id: 'calotas_traseiras_dir', label: 'Calotas Traseiras Dir.', statuses: lightFleetStatuses },
+    { id: 'palheta_traseira', label: 'Palheta Traseira', statuses: lightFleetStatuses },
+    { id: 'parabrisa', label: 'Para-brisa', statuses: lightFleetStatuses },
+    { id: 'farois_dianteiros_piscas', label: 'Faróis Dianteiros/Piscas', statuses: lightFleetStatuses },
+    { id: 'lanternas_piscas_traseiros', label: 'Lanternas, Piscas Traseiros', statuses: lightFleetStatuses },
+    { id: 'farois_neblina', label: 'Faróis de Neblina', statuses: lightFleetStatuses },
+    { id: 'palhetas_dianteiras', label: 'Palhetas Dianteiras', statuses: lightFleetStatuses },
+  ],
+  capo: [
+    { id: 'nivel_fluido_freio_leve', label: 'Nível de Fluido de Freio', statuses: lightFleetStatuses },
+    { id: 'nivel_liquido_arrefecimento_leve', label: 'Nível de Líquido de Arrefecimento', statuses: lightFleetStatuses },
+    { id: 'nivel_fluido_hidraulica', label: 'Nível de Fluido de Hidráulica', statuses: lightFleetStatuses },
+    { id: 'bateria_controle_visual', label: 'Bateria (Controle Visual)', statuses: lightFleetStatuses },
+  ],
+  porta_malas: [
+    { id: 'triangulo_leve', label: 'Triângulo', statuses: lightFleetStatuses },
+    { id: 'chave_roda_leve', label: 'Chave de Roda', statuses: lightFleetStatuses },
+    { id: 'macaco_leve', label: 'Macaco', statuses: lightFleetStatuses },
+    { id: 'break_light', label: 'Break Light', statuses: lightFleetStatuses },
+    { id: 'chaves_leve', label: 'Chaves', statuses: lightFleetStatuses },
+  ],
+};

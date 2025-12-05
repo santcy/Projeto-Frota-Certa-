@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Accordion,
@@ -39,9 +38,9 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import {
-  CHECKLIST_ITEMS,
-  CHECKLIST_ITEMS_SECTIONS,
-  ChecklistItemStatus,
+  CHECKLIST_ITEMS_LEVE,
+  CHECKLIST_ITEMS_SECTIONS_LEVE,
+  LightVehicleChecklistItemStatus,
   Vehicle,
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -61,12 +60,24 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const checklistItemsSchema = Object.values(CHECKLIST_ITEMS)
+const lightChecklistItemsSchema = Object.values(CHECKLIST_ITEMS_LEVE)
   .flat()
   .reduce((acc, item) => {
-    acc[item.id] = z.enum(['ok', 'issue', 'na']);
+    acc[item.id] = z.enum([
+      "Em excelente estado",
+      "Desgastado",
+      "Incompleto",
+      "Feito",
+      "Pendente",
+      "Avariado",
+      "Manchado",
+      "ok", 
+      "issue", 
+      "na"
+    ]);
     return acc;
-  }, {} as Record<string, z.ZodEnum<['ok', 'issue', 'na']>>);
+  }, {} as Record<string, z.ZodEnum<any>>);
+
 
 const formSchema = z.object({
   driverName: z.string().min(3, 'O nome do motorista é obrigatório.'),
@@ -75,19 +86,29 @@ const formSchema = z.object({
     required_error: 'Selecione o tipo de checklist.',
   }),
   odometer: z.coerce.number().min(1, 'O odômetro é obrigatório.'),
-  fuelLevel: z.number().min(0).max(100),
-  items: z.object(checklistItemsSchema),
-  notes: z.string().optional(),
-  dashboardPhotoUrl: z.string().url('É obrigatório tirar a foto do painel.'),
-  dashboardPhotoUrl2: z.string().url('É obrigatório tirar a foto do segundo painel de combustível.'),
+  fuelLevelPhotoUrl: z.string().url('É obrigatório tirar a foto do nível de combustível.'),
+  kmPhotoUrl: z.string().url('É obrigatório tirar a foto do odômetro.'),
+  enginePhotoUrl: z.string().url('É obrigatório tirar a foto do motor.'),
+  leftSidePhotoUrl: z.string().url('É obrigatório tirar a foto da lateral esquerda.'),
+  rightSidePhotoUrl: z.string().url('É obrigatório tirar a foto da lateral direita.'),
   frontPhotoUrl: z.string().url('É obrigatório tirar a foto da frente.'),
   backPhotoUrl: z.string().url('É obrigatório tirar a foto de trás.'),
-  leftSidePhotoUrl: z.string().url('É obrigatório tirar a foto do lado esquerdo.'),
-  rightSidePhotoUrl: z.string().url('É obrigatório tirar a foto do lado direito.'),
+  trunkPhotoUrl: z.string().url('É obrigatório tirar a foto da mala.'),
+  items: z.object(lightChecklistItemsSchema),
+  notes: z.string().optional(),
 });
 
+
 type FormValues = z.infer<typeof formSchema>;
-type PhotoKey = 'dashboardPhotoUrl' | 'dashboardPhotoUrl2' | 'frontPhotoUrl' | 'backPhotoUrl' | 'leftSidePhotoUrl' | 'rightSidePhotoUrl';
+type PhotoKey = 
+  | 'fuelLevelPhotoUrl'
+  | 'kmPhotoUrl'
+  | 'enginePhotoUrl'
+  | 'leftSidePhotoUrl'
+  | 'rightSidePhotoUrl'
+  | 'frontPhotoUrl'
+  | 'backPhotoUrl'
+  | 'trunkPhotoUrl';
 
 
 const CameraCapture = ({
@@ -196,31 +217,34 @@ export function ChecklistForm() {
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
-
-  const defaultItems = Object.values(CHECKLIST_ITEMS)
-    .flat()
-    .reduce((acc, item) => {
-      acc[item.id] = 'ok';
-      return acc;
-    }, {} as Record<string, ChecklistItemStatus>);
+    
+  const defaultItems = Object.values(CHECKLIST_ITEMS_LEVE)
+  .flat()
+  .reduce((acc, item) => {
+    // @ts-ignore
+    acc[item.id] = item.statuses[0]; // Set default status
+    return acc;
+  }, {} as Record<string, LightVehicleChecklistItemStatus | 'ok' | 'issue' | 'na'>);
+  
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       driverName: user?.name || '',
-      fuelLevel: 50,
       items: defaultItems,
       notes: '',
     },
   });
 
   const photoFields: { key: PhotoKey; label: string }[] = [
-    { key: 'dashboardPhotoUrl', label: 'Foto do Painel (Combustível 1)' },
-    { key: 'dashboardPhotoUrl2', label: 'Foto do Painel (Combustível 2)' },
-    { key: 'frontPhotoUrl', label: 'Frente do Veículo' },
-    { key: 'backPhotoUrl', label: 'Traseira do Veículo' },
-    { key: 'leftSidePhotoUrl', label: 'Lado Esquerdo do Veículo' },
-    { key: 'rightSidePhotoUrl', label: 'Lado Direito do Veículo' },
+    { key: 'fuelLevelPhotoUrl', label: 'Nível de Combustível' },
+    { key: 'kmPhotoUrl', label: 'Odômetro (KM)' },
+    { key: 'enginePhotoUrl', label: 'Motor' },
+    { key: 'leftSidePhotoUrl', label: 'Lateral Esquerda' },
+    { key: 'rightSidePhotoUrl', label: 'Lateral Direita' },
+    { key: 'frontPhotoUrl', label: 'Frente' },
+    { key: 'backPhotoUrl', label: 'Traseira' },
+    { key: 'trunkPhotoUrl', label: 'Porta-malas' },
   ];
 
   async function onSubmit(data: FormValues) {
@@ -240,7 +264,7 @@ export function ChecklistForm() {
 
       // 1. Create the new checklist document
       const checklistRef = doc(collection(firestore, 'checklists'));
-      const hasIssues = Object.values(data.items).includes('issue');
+      const hasIssues = Object.values(data.items).includes('Avariado'); // Example of an issue status
       
       const newChecklist = {
         ...data,
@@ -248,6 +272,7 @@ export function ChecklistForm() {
         userId: user.uid,
         driverName: data.driverName,
         date: serverTimestamp(),
+        checklistType: 'leve' // Add checklist type
       };
       batch.set(checklistRef, newChecklist);
 
@@ -255,7 +280,6 @@ export function ChecklistForm() {
       const vehicleRef = doc(firestore, 'vehicles', data.vehicleId);
       const vehicleUpdateData = {
         odometer: data.odometer,
-        fuelLevel: data.fuelLevel,
         lastCheck: serverTimestamp(),
         status: hasIssues ? 'Com Problemas' : 'Operacional',
       };
@@ -275,15 +299,16 @@ export function ChecklistForm() {
         vehicleId: '',
         type: undefined,
         odometer: 0,
-        fuelLevel: 50,
         items: defaultItems,
         notes: '',
-        dashboardPhotoUrl: undefined,
-        dashboardPhotoUrl2: undefined,
-        frontPhotoUrl: undefined,
-        backPhotoUrl: undefined,
+        fuelLevelPhotoUrl: undefined,
+        kmPhotoUrl: undefined,
+        enginePhotoUrl: undefined,
         leftSidePhotoUrl: undefined,
         rightSidePhotoUrl: undefined,
+        frontPhotoUrl: undefined,
+        backPhotoUrl: undefined,
+        trunkPhotoUrl: undefined
       });
 
     } catch (error) {
@@ -453,15 +478,15 @@ export function ChecklistForm() {
         <Accordion
           type="multiple"
           className="w-full"
-          defaultValue={['iluminacao']}
+          defaultValue={['pneus']}
         >
-          {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(
+          {Object.entries(CHECKLIST_ITEMS_SECTIONS_LEVE).map(
             ([sectionKey, sectionName]) => (
               <AccordionItem value={sectionKey} key={sectionKey}>
                 <AccordionTrigger>{sectionName}</AccordionTrigger>
                 <AccordionContent className="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                  {CHECKLIST_ITEMS[
-                    sectionKey as keyof typeof CHECKLIST_ITEMS
+                  {CHECKLIST_ITEMS_LEVE[
+                    sectionKey as keyof typeof CHECKLIST_ITEMS_LEVE
                   ].map((item) => (
                     <FormField
                       key={item.id}
@@ -471,32 +496,18 @@ export function ChecklistForm() {
                         <FormItem className="space-y-3">
                           <FormLabel>{item.label}</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex items-center space-x-4"
-                            >
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="ok" />
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                               <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um status" />
+                                </SelectTrigger>
                                 </FormControl>
-                                <FormLabel className="font-normal">OK</FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="issue" />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  Problema
-                                </FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="na" />
-                                </FormControl>
-                                <FormLabel className="font-normal">N/A</FormLabel>
-                              </FormItem>
-                            </RadioGroup>
+                                <SelectContent>
+                                    {item.statuses.map(status => (
+                                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                           </FormControl>
                         </FormItem>
                       )}
@@ -512,24 +523,6 @@ export function ChecklistForm() {
 
         <FormField
           control={form.control}
-          name="fuelLevel"
-          render={({ field: { onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Nível de Combustível ({field.value}%)</FormLabel>
-              <FormControl>
-                <Slider
-                  value={[field.value]}
-                  onValueChange={(value) => onChange(value[0])}
-                  max={100}
-                  step={5}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="notes"
           render={({ field }) => (
             <FormItem>
@@ -541,7 +534,7 @@ export function ChecklistForm() {
                 />
               </FormControl>
               <FormDescription>
-                Se algum item foi marcado como "Problema", detalhe aqui.
+                Se algum item foi marcado com status de avaria ou pendência, detalhe aqui.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -569,5 +562,3 @@ export function ChecklistForm() {
     </Form>
   );
 }
-
-    

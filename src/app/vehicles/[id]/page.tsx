@@ -16,9 +16,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  CHECKLIST_ITEMS,
-  CHECKLIST_ITEMS_SECTIONS,
-  ChecklistItemStatus,
+  CHECKLIST_ITEMS_LEVE,
+  CHECKLIST_ITEMS_SECTIONS_LEVE,
+  LightVehicleChecklistItemStatus,
   type Vehicle,
   type Checklist,
 } from '@/lib/types';
@@ -43,14 +43,23 @@ interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
 
-function getItemStatusIcon(status: ChecklistItemStatus) {
+function getItemStatusIcon(status: LightVehicleChecklistItemStatus | 'ok' | 'issue' | 'na') {
   switch (status) {
     case 'ok':
+    case 'Em excelente estado':
+    case 'Feito':
       return <CheckCircle2 className="h-4 w-4 text-green-500" />;
     case 'issue':
+    case 'Avariado':
+    case 'Incompleto':
+    case 'Desgastado':
       return <XCircle className="h-4 w-4 text-destructive" />;
     case 'na':
+    case 'Pendente':
+    case 'Manchado':
       return <CircleSlash className="h-4 w-4 text-muted-foreground" />;
+    default:
+        return <CircleSlash className="h-4 w-4 text-muted-foreground" />;
   }
 }
 
@@ -120,7 +129,6 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
       ['Data:', checklist.date.toDate().toLocaleString('pt-BR')],
       ['Tipo:', checklist.type],
       ['Odômetro:', `${checklist.odometer.toLocaleString('pt-BR')} km`],
-      ['Combustível:', `${checklist.fuelLevel}%`],
     ];
 
     doc.autoTable({
@@ -135,15 +143,15 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
 
     const checklistBody = [];
 
-    for (const [sectionKey, sectionName] of Object.entries(CHECKLIST_ITEMS_SECTIONS)) {
-      const sectionItems = CHECKLIST_ITEMS[sectionKey as keyof typeof CHECKLIST_ITEMS];
+    for (const [sectionKey, sectionName] of Object.entries(CHECKLIST_ITEMS_SECTIONS_LEVE)) {
+      const sectionItems = CHECKLIST_ITEMS_LEVE[sectionKey as keyof typeof CHECKLIST_ITEMS_LEVE];
       const relevantItems = sectionItems.filter(item => checklist.items[item.id]);
 
       if (relevantItems.length > 0) {
         checklistBody.push([{ content: sectionName.toUpperCase(), colSpan: 2, styles: { fontStyle: 'bold', fillColor: [241, 245, 249] } }]);
         for (const item of relevantItems) {
           const status = checklist.items[item.id];
-          checklistBody.push([item.label, status.toUpperCase()]);
+          checklistBody.push([item.label, String(status).toUpperCase()]);
         }
       }
     }
@@ -169,24 +177,25 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
       finalY = (doc as any).lastAutoTable.finalY;
     }
 
-    // Add photos
     doc.addPage();
     doc.setFontSize(14);
     doc.text('Fotos do Checklist', 14, 20);
     
     const photos = [
-      { title: 'Painel (Combustível 1)', url: checklist.dashboardPhotoUrl },
-      { title: 'Painel (Combustível 2)', url: checklist.dashboardPhotoUrl2 },
+      { title: 'Nível de Combustível', url: checklist.fuelLevelPhotoUrl },
+      { title: 'Odômetro (KM)', url: checklist.kmPhotoUrl },
+      { title: 'Motor', url: checklist.enginePhotoUrl },
       { title: 'Frente', url: checklist.frontPhotoUrl },
       { title: 'Traseira', url: checklist.backPhotoUrl },
       { title: 'Lado Esquerdo', url: checklist.leftSidePhotoUrl },
       { title: 'Lado Direito', url: checklist.rightSidePhotoUrl },
+      { title: 'Porta-malas', url: checklist.trunkPhotoUrl },
     ];
     
     let photoY = 30;
-    photos.forEach((photo, index) => {
+    photos.forEach((photo) => {
       if (photo.url) {
-        if (photoY > 220) { // check for page break
+        if (photoY > 220) { 
           doc.addPage();
           photoY = 20;
         }
@@ -198,7 +207,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
           console.error(`Error adding image to PDF for ${photo.title}:`, e);
           doc.text('Erro ao carregar imagem', 14, photoY + 20);
         }
-        photoY += 75; // Y position for next image
+        photoY += 75; 
       }
     });
 
@@ -214,12 +223,14 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   }
 
   const photoFields: { key: keyof Checklist; label: string }[] = [
-    { key: 'dashboardPhotoUrl', label: 'Foto do Painel (Combustível 1)' },
-    { key: 'dashboardPhotoUrl2', label: 'Foto do Painel (Combustível 2)' },
+    { key: 'fuelLevelPhotoUrl', label: 'Foto do Nível de Combustível' },
+    { key: 'kmPhotoUrl', label: 'Foto do Odômetro' },
+    { key: 'enginePhotoUrl', label: 'Foto do Motor' },
     { key: 'frontPhotoUrl', label: 'Frente do Veículo' },
     { key: 'backPhotoUrl', label: 'Traseira do Veículo' },
     { key: 'leftSidePhotoUrl', label: 'Lado Esquerdo' },
     { key: 'rightSidePhotoUrl', label: 'Lado Direito' },
+    { key: 'trunkPhotoUrl', label: 'Foto do Porta-malas' },
   ];
 
   return (
@@ -294,11 +305,11 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                       <div>
                         <h4 className="mb-4 font-semibold text-lg">Itens Verificados</h4>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                          {Object.entries(CHECKLIST_ITEMS_SECTIONS).map(
+                          {Object.entries(CHECKLIST_ITEMS_SECTIONS_LEVE).map(
                             ([sectionKey, sectionName]) => {
                               const sectionItems =
-                                CHECKLIST_ITEMS[
-                                  sectionKey as keyof typeof CHECKLIST_ITEMS
+                                CHECKLIST_ITEMS_LEVE[
+                                  sectionKey as keyof typeof CHECKLIST_ITEMS_LEVE
                                 ];
                               const relevantItems = sectionItems.filter(
                                 (item) => checklist.items[item.id]
@@ -319,7 +330,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                                       >
                                         <span>{item.label}</span>
                                         {getItemStatusIcon(
-                                          checklist.items[item.id]
+                                          checklist.items[item.id] as LightVehicleChecklistItemStatus
                                         )}
                                       </li>
                                     ))}
@@ -375,5 +386,3 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     </div>
   );
 }
-
-    
