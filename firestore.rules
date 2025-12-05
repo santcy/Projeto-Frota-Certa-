@@ -124,7 +124,8 @@ service cloud.firestore {
      */
     match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
-      allow list: if isSignedIn();
+      // Admins can list all checklists. Drivers can only list their own.
+      allow list: if isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
       allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
       allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
