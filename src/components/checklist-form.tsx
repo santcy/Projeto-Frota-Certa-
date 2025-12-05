@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   collection,
   doc,
@@ -46,10 +46,20 @@ import {
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
-import { Check, Send } from 'lucide-react';
+import { Check, Send, Camera, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import Image from 'next/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const checklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   .flat()
@@ -68,9 +78,110 @@ const formSchema = z.object({
   fuelLevel: z.number().min(0).max(100),
   items: z.object(checklistItemsSchema),
   notes: z.string().optional(),
+  dashboardPhotoUrl: z.string().url('É obrigatório tirar a foto do painel.'),
+  frontPhotoUrl: z.string().url('É obrigatório tirar a foto da frente.'),
+  backPhotoUrl: z.string().url('É obrigatório tirar a foto de trás.'),
+  leftSidePhotoUrl: z.string().url('É obrigatório tirar a foto do lado esquerdo.'),
+  rightSidePhotoUrl: z.string().url('É obrigatório tirar a foto do lado direito.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type PhotoKey = 'dashboardPhotoUrl' | 'frontPhotoUrl' | 'backPhotoUrl' | 'leftSidePhotoUrl' | 'rightSidePhotoUrl';
+
+
+const CameraCapture = ({
+  onCapture,
+  trigger,
+}: {
+  onCapture: (dataUrl: string) => void;
+  trigger: React.ReactNode;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const { toast } = useToast();
+
+  const handleOpen = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+      setStream(mediaStream);
+      setHasCameraPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Acesso à Câmera Negado',
+        description: 'Por favor, habilite o acesso à câmera nas configurações do seu navegador.',
+      });
+    }
+  };
+
+  const handleClose = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+  };
+
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        onCapture(dataUrl);
+        handleClose();
+      }
+    }
+  };
+
+  return (
+    <Dialog onOpenChange={(open) => (open ? handleOpen() : handleClose())}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Tirar Foto</DialogTitle>
+        </DialogHeader>
+        <div className="relative">
+          {hasCameraPermission === false && (
+             <Alert variant="destructive">
+                <AlertTitle>Acesso à Câmera Necessário</AlertTitle>
+                <AlertDescription>
+                  Você precisa permitir o acesso à câmera para continuar.
+                </AlertDescription>
+              </Alert>
+          )}
+           <video
+            ref={videoRef}
+            className="w-full aspect-video rounded-md bg-muted"
+            autoPlay
+            playsInline
+            muted
+          />
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+        <DialogClose asChild>
+          <Button onClick={handleCapture} disabled={!hasCameraPermission}>
+            <Camera className="mr-2 h-4 w-4" />
+            Capturar Foto
+          </Button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 
 export function ChecklistForm() {
   const { toast } = useToast();
@@ -102,6 +213,14 @@ export function ChecklistForm() {
     },
   });
 
+  const photoFields: { key: PhotoKey; label: string }[] = [
+    { key: 'dashboardPhotoUrl', label: 'Foto do Painel (Combustível)' },
+    { key: 'frontPhotoUrl', label: 'Frente do Veículo' },
+    { key: 'backPhotoUrl', label: 'Traseira do Veículo' },
+    { key: 'leftSidePhotoUrl', label: 'Lado Esquerdo do Veículo' },
+    { key: 'rightSidePhotoUrl', label: 'Lado Direito do Veículo' },
+  ];
+
   async function onSubmit(data: FormValues) {
     if (!firestore || !user) {
       toast({
@@ -125,8 +244,8 @@ export function ChecklistForm() {
         ...data,
         id: checklistRef.id,
         userId: user.uid,
-        driverName: data.driverName, // Already in form data
-        date: serverTimestamp(), // Use server timestamp
+        driverName: data.driverName,
+        date: serverTimestamp(),
       };
       batch.set(checklistRef, newChecklist);
 
@@ -157,6 +276,11 @@ export function ChecklistForm() {
         fuelLevel: 50,
         items: defaultItems,
         notes: '',
+        dashboardPhotoUrl: undefined,
+        frontPhotoUrl: undefined,
+        backPhotoUrl: undefined,
+        leftSidePhotoUrl: undefined,
+        rightSidePhotoUrl: undefined,
       });
 
     } catch (error) {
@@ -259,6 +383,66 @@ export function ChecklistForm() {
             </FormItem>
           )}
         />
+        
+        <Separator />
+
+        <div className="space-y-6">
+          <h3 className="text-lg font-medium">Fotos Obrigatórias</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {photoFields.map(({ key, label }) => (
+              <FormField
+                key={key}
+                control={form.control}
+                name={key}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{label}</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        {field.value ? (
+                          <div className="relative w-full aspect-video rounded-md border bg-muted">
+                            <Image
+                              src={field.value}
+                              alt={`Preview of ${label}`}
+                              layout="fill"
+                              objectFit="cover"
+                              className="rounded-md"
+                            />
+                            <CameraCapture
+                                onCapture={(dataUrl) => field.onChange(dataUrl)}
+                                trigger={
+                                    <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="absolute top-2 right-2 z-10 bg-background/70 hover:bg-background"
+                                    >
+                                    <RefreshCw className="h-4 w-4" />
+                                    <span className="sr-only">Tirar outra foto</span>
+                                    </Button>
+                                }
+                                />
+                          </div>
+                        ) : (
+                          <CameraCapture
+                            onCapture={(dataUrl) => field.onChange(dataUrl)}
+                            trigger={
+                               <Button type="button" variant="outline" className="w-full">
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    Tirar Foto
+                               </Button>
+                            }
+                          />
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+        </div>
 
         <Separator />
 

@@ -112,6 +112,31 @@
         "status": {
           "type": "string",
           "description": "Overall status of the vehicle based on checklist (e.g., 'Good', 'Needs Maintenance')."
+        },
+        "dashboardPhotoUrl": {
+          "type": "string",
+          "description": "URL of the dashboard photo.",
+          "format": "uri"
+        },
+        "frontPhotoUrl": {
+          "type": "string",
+          "description": "URL of the front photo of the vehicle.",
+          "format": "uri"
+        },
+        "backPhotoUrl": {
+          "type": "string",
+          "description": "URL of the back photo of the vehicle.",
+          "format": "uri"
+        },
+        "leftSidePhotoUrl": {
+          "type": "string",
+          "description": "URL of the left side photo of the vehicle.",
+          "format": "uri"
+        },
+        "rightSidePhotoUrl": {
+          "type": "string",
+          "description": "URL of the right side photo of the vehicle.",
+          "format": "uri"
         }
       },
       "required": [
@@ -125,7 +150,12 @@
         "dateIn",
         "timeIn",
         "odometerIn",
-        "status"
+        "status",
+        "dashboardPhotoUrl",
+        "frontPhotoUrl",
+        "backPhotoUrl",
+        "leftSidePhotoUrl",
+        "rightSidePhotoUrl"
       ]
     },
     "ChecklistItem": {

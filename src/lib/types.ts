@@ -33,6 +33,11 @@ export interface Checklist {
   fuelLevel: number;
   items: Record<string, ChecklistItemStatus>;
   notes?: string;
+  dashboardPhotoUrl: string;
+  frontPhotoUrl: string;
+  backPhotoUrl: string;
+  leftSidePhotoUrl: string;
+  rightSidePhotoUrl: string;
 }
 
 export const CHECKLIST_ITEMS_SECTIONS = {
