@@ -93,11 +93,11 @@ service cloud.firestore {
      * @path /users/{userId}
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // Explicitly disallow listing all users for privacy
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && isExistingDoc();
-      allow delete: if isOwner(userId) && isExistingDoc();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
     }
     
     /**
@@ -118,9 +118,8 @@ service cloud.firestore {
     match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
       // Admins can list all checklists. Drivers can only list their own if they query by userId.
-      // This rule is designed to work with the queries in the application.
       // List rules cannot use get() or exists().
-      allow list: if isSignedIn(); // Allow any authenticated user to attempt a list. The dashboard/reports pages must use correct queries.
+      allow list: if isAdmin() || (request.query.where.userId == request.auth.uid);
       allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
       allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
