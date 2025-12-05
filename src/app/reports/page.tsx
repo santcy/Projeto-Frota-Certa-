@@ -122,7 +122,8 @@ export default function ReportsPage() {
     doc.text('Fotos do Checklist', 14, 20);
     
     const photos = [
-      { title: 'Painel', url: checklist.dashboardPhotoUrl },
+      { title: 'Painel (Combustível 1)', url: checklist.dashboardPhotoUrl },
+      { title: 'Painel (Combustível 2)', url: checklist.dashboardPhotoUrl2 },
       { title: 'Frente', url: checklist.frontPhotoUrl },
       { title: 'Traseira', url: checklist.backPhotoUrl },
       { title: 'Lado Esquerdo', url: checklist.leftSidePhotoUrl },
@@ -269,3 +270,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    

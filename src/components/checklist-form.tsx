@@ -79,6 +79,7 @@ const formSchema = z.object({
   items: z.object(checklistItemsSchema),
   notes: z.string().optional(),
   dashboardPhotoUrl: z.string().url('É obrigatório tirar a foto do painel.'),
+  dashboardPhotoUrl2: z.string().url('É obrigatório tirar a foto do segundo painel de combustível.'),
   frontPhotoUrl: z.string().url('É obrigatório tirar a foto da frente.'),
   backPhotoUrl: z.string().url('É obrigatório tirar a foto de trás.'),
   leftSidePhotoUrl: z.string().url('É obrigatório tirar a foto do lado esquerdo.'),
@@ -86,7 +87,7 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type PhotoKey = 'dashboardPhotoUrl' | 'frontPhotoUrl' | 'backPhotoUrl' | 'leftSidePhotoUrl' | 'rightSidePhotoUrl';
+type PhotoKey = 'dashboardPhotoUrl' | 'dashboardPhotoUrl2' | 'frontPhotoUrl' | 'backPhotoUrl' | 'leftSidePhotoUrl' | 'rightSidePhotoUrl';
 
 
 const CameraCapture = ({
@@ -214,7 +215,8 @@ export function ChecklistForm() {
   });
 
   const photoFields: { key: PhotoKey; label: string }[] = [
-    { key: 'dashboardPhotoUrl', label: 'Foto do Painel (Combustível)' },
+    { key: 'dashboardPhotoUrl', label: 'Foto do Painel (Combustível 1)' },
+    { key: 'dashboardPhotoUrl2', label: 'Foto do Painel (Combustível 2)' },
     { key: 'frontPhotoUrl', label: 'Frente do Veículo' },
     { key: 'backPhotoUrl', label: 'Traseira do Veículo' },
     { key: 'leftSidePhotoUrl', label: 'Lado Esquerdo do Veículo' },
@@ -277,6 +279,7 @@ export function ChecklistForm() {
         items: defaultItems,
         notes: '',
         dashboardPhotoUrl: undefined,
+        dashboardPhotoUrl2: undefined,
         frontPhotoUrl: undefined,
         backPhotoUrl: undefined,
         leftSidePhotoUrl: undefined,
@@ -566,3 +569,5 @@ export function ChecklistForm() {
     </Form>
   );
 }
+
+    

@@ -175,7 +175,8 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     doc.text('Fotos do Checklist', 14, 20);
     
     const photos = [
-      { title: 'Painel', url: checklist.dashboardPhotoUrl },
+      { title: 'Painel (Combustível 1)', url: checklist.dashboardPhotoUrl },
+      { title: 'Painel (Combustível 2)', url: checklist.dashboardPhotoUrl2 },
       { title: 'Frente', url: checklist.frontPhotoUrl },
       { title: 'Traseira', url: checklist.backPhotoUrl },
       { title: 'Lado Esquerdo', url: checklist.leftSidePhotoUrl },
@@ -213,7 +214,8 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   }
 
   const photoFields: { key: keyof Checklist; label: string }[] = [
-    { key: 'dashboardPhotoUrl', label: 'Foto do Painel' },
+    { key: 'dashboardPhotoUrl', label: 'Foto do Painel (Combustível 1)' },
+    { key: 'dashboardPhotoUrl2', label: 'Foto do Painel (Combustível 2)' },
     { key: 'frontPhotoUrl', label: 'Frente do Veículo' },
     { key: 'backPhotoUrl', label: 'Traseira do Veículo' },
     { key: 'leftSidePhotoUrl', label: 'Lado Esquerdo' },
@@ -373,3 +375,5 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     </div>
   );
 }
+
+    

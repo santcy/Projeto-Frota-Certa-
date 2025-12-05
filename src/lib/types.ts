@@ -34,6 +34,7 @@ export interface Checklist {
   items: Record<string, ChecklistItemStatus>;
   notes?: string;
   dashboardPhotoUrl: string;
+  dashboardPhotoUrl2: string;
   frontPhotoUrl: string;
   backPhotoUrl: string;
   leftSidePhotoUrl: string;
@@ -111,3 +112,5 @@ export const CHECKLIST_ITEMS: Record<keyof typeof CHECKLIST_ITEMS_SECTIONS, { id
     { id: 'limpeza_exterior', label: 'Limpeza Exterior' },
   ]
 };
+
+    
