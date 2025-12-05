@@ -6,7 +6,6 @@ import {
   ClipboardCheck,
   FileText,
   LayoutDashboard,
-  PlusCircle,
   Truck,
   Wrench,
   Archive,
@@ -29,8 +28,8 @@ const allNavItems = [
   { href: '/vehicles', label: 'Veículos', icon: Truck, roles: ['admin'] },
   { href: '/reports', label: 'Histórico', icon: FileText, roles: ['admin'] },
   { href: '/reports/unified', label: 'Relatório Unificado', icon: Archive, roles: ['admin'] },
-  { href: '/checklist', label: 'Novo Checklist', icon: ClipboardCheck, roles: ['admin', 'driver'] },
-  { href: '/vehicles/new', label: 'Cadastrar Veículo', icon: PlusCircle, roles: ['admin'] },
+  { href: '/checklist/light', label: 'Checklist Leve', icon: ClipboardCheck, roles: ['admin', 'driver'] },
+  { href: '/checklist/heavy', label: 'Checklist Pesado', icon: ClipboardCheck, roles: ['admin', 'driver'] },
 ];
 
 export function SidebarNav() {

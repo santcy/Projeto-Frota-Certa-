@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
-const protectedRoutes = ['/', '/vehicles', '/reports', '/checklist']; // Routes that require authentication
+const protectedRoutes = ['/', '/vehicles', '/reports', '/checklist/light', '/checklist/heavy']; // Routes that require authentication
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useAuth();
