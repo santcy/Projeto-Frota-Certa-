@@ -28,8 +28,6 @@ const allNavItems = [
   { href: '/vehicles', label: 'Veículos', icon: Truck, roles: ['admin'] },
   { href: '/checklist/light', label: 'Checklist Leve', icon: ClipboardCheck, roles: ['admin', 'driver'] },
   { href: '/checklist/heavy', label: 'Checklist Pesado', icon: ClipboardCheck, roles: ['admin', 'driver'] },
-  { href: '/reports/light', label: 'Histórico Leve', icon: FileText, roles: ['admin'] },
-  { href: '/reports/heavy', label: 'Histórico Pesado', icon: FileText, roles: ['admin'] },
   { href: '/reports/light/unified', label: 'Unificado Leve', icon: Archive, roles: ['admin'] },
   { href: '/reports/heavy/unified', label: 'Unificado Pesado', icon: Archive, roles: ['admin'] },
 ];
