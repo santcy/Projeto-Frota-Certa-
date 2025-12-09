@@ -123,7 +123,7 @@ export const CHECKLIST_ITEMS: Record<keyof typeof CHECKLIST_ITEMS_SECTIONS, { id
     { id: 'chave_ignicao', label: 'Chave de Ignição' },
   ],
   limpeza: [
-    { id: 'limpeza_veiculo', label: 'Limpeza do Veículo' },
+    { id: 'limpeza_veiculo', label: 'O veículo necessita de limpeza?' },
   ]
 };
 
