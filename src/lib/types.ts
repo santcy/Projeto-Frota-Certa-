@@ -14,7 +14,7 @@ export interface Vehicle {
   lastCheck?: Timestamp;
 }
 
-export type ChecklistItemStatus = 'ok' | 'issue' | 'na';
+export type ChecklistItemStatus = 'ok' | 'issue' | 'na' | 'sim' | 'nao';
 
 export type LightVehicleChecklistItemStatus =
   | 'Em excelente estado'
@@ -123,8 +123,7 @@ export const CHECKLIST_ITEMS: Record<keyof typeof CHECKLIST_ITEMS_SECTIONS, { id
     { id: 'chave_ignicao', label: 'Chave de Ignição' },
   ],
   limpeza: [
-    { id: 'limpeza_interior', label: 'Limpeza Interior' },
-    { id: 'limpeza_exterior', label: 'Limpeza Exterior' },
+    { id: 'limpeza_veiculo', label: 'Limpeza do Veículo' },
   ]
 };
 

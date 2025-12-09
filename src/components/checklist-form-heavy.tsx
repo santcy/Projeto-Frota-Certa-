@@ -63,9 +63,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 const heavyChecklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   .flat()
   .reduce((acc, item) => {
-    acc[item.id] = z.enum(['ok', 'issue', 'na']);
+    if (item.id === 'limpeza_veiculo') {
+       acc[item.id] = z.enum(['sim', 'nao']);
+    } else {
+       acc[item.id] = z.enum(['ok', 'issue', 'na']);
+    }
     return acc;
-  }, {} as Record<string, z.ZodEnum<['ok', 'issue', 'na']>>);
+  }, {} as Record<string, z.ZodEnum<['ok', 'issue', 'na'] | ['sim', 'nao']>>);
 
 
 const formSchema = z.object({
@@ -208,7 +212,7 @@ export function ChecklistFormHeavy() {
   .flat()
   .reduce((acc, item) => {
     // @ts-ignore
-    acc[item.id] = 'ok'; // Set default status
+    acc[item.id] = item.id === 'limpeza_veiculo' ? 'sim' : 'ok'; // Set default status
     return acc;
   }, {} as Record<string, ChecklistItemStatus>);
   
@@ -492,30 +496,51 @@ export function ChecklistFormHeavy() {
                         <FormItem className="space-y-3">
                           <FormLabel>{item.label}</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex gap-4"
-                            >
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="ok" />
-                                </FormControl>
-                                <FormLabel className="font-normal">OK</FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="issue" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Avaria</FormLabel>
-                              </FormItem>
-                               <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="na" />
-                                </FormControl>
-                                <FormLabel className="font-normal">N/A</FormLabel>
-                              </FormItem>
-                            </RadioGroup>
+                             {item.id === 'limpeza_veiculo' ? (
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex gap-4"
+                                >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="sim" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Sim</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="nao" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Não</FormLabel>
+                                </FormItem>
+                                </RadioGroup>
+                             ) : (
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex gap-4"
+                                >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="ok" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">OK</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="issue" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Avaria</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="na" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">N/A</FormLabel>
+                                </FormItem>
+                                </RadioGroup>
+                             )}
                           </FormControl>
                         </FormItem>
                       )}
