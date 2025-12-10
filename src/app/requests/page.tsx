@@ -50,9 +50,60 @@ function StatusBadge({ status }: { status: MaintenanceRequestStatus }) {
   return <Badge variant={statusVariants[status]}>{status}</Badge>;
 }
 
+function RequestsPageSkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Peças e Itens Solicitados</CardTitle>
+                <CardDescription>
+                Itens que requerem atenção com base nos últimos checklists.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Veículo</TableHead>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Motorista</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Array.from({ length: 10 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell>
+                            <Skeleton className="h-5 w-32" />
+                            </TableCell>
+                            <TableCell>
+                            <Skeleton className="h-5 w-24" />
+                            </TableCell>
+                            <TableCell>
+                            <Skeleton className="h-5 w-28" />
+                            </TableCell>
+                            <TableCell>
+                            <Skeleton className="h-5 w-28" />
+                            </TableCell>
+                            <TableCell>
+                            <Skeleton className="h-6 w-20" />
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <Skeleton className="h-8 w-8 ml-auto" />
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function RequestedPartsPage() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
+  const { user, isUserLoading: isAuthLoading } = useAuth();
 
   const requestsQuery = useMemoFirebase(
     () =>
@@ -64,8 +115,10 @@ export default function RequestedPartsPage() {
         : null,
     [firestore, user]
   );
-  const { data: requests, isLoading } =
+  const { data: requests, isLoading: isRequestsLoading } =
     useCollection<MaintenanceRequest>(requestsQuery);
+
+  const isLoading = isAuthLoading || (user?.role === 'admin' && isRequestsLoading);
 
   const handleStatusChange = (
     requestId: string,
@@ -79,6 +132,23 @@ export default function RequestedPartsPage() {
     });
   };
 
+  if (isLoading) {
+    return (
+         <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                Solicitações de Manutenção
+                </h1>
+                <p className="text-muted-foreground">
+                Gerencie todos os itens reportados com avaria ou problema nos
+                checklists.
+                </p>
+            </div>
+            <RequestsPageSkeleton />
+        </div>
+    );
+  }
+  
   if (user?.role !== 'admin') {
     return (
       <div className="max-w-4xl mx-auto text-center py-10">
@@ -122,30 +192,7 @@ export default function RequestedPartsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                Array.from({ length: 10 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-5 w-32" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-5 w-24" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-5 w-28" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-5 w-28" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-20" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="h-8 w-8 ml-auto" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : requests && requests.length > 0 ? (
+              {requests && requests.length > 0 ? (
                 requests.map((req) => (
                   <TableRow key={req.id}>
                     <TableCell className="font-medium">{req.itemName}</TableCell>
