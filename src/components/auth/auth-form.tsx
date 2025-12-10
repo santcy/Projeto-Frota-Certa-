@@ -32,7 +32,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, getDocs, collection } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -130,24 +130,38 @@ export function AuthForm() {
 
   const onSignUp = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Serviço de banco de dados indisponível.'});
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
+      // Check if any user exists to determine if this is the first user
+      const usersCollection = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const isFirstUser = usersSnapshot.empty;
+      
+      // If it's the first user, force role to admin
+      const userType = isFirstUser ? 'admin' : data.userType;
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
         data.password
       );
       await updateProfile(userCredential.user, { displayName: data.name });
-
-      if (firestore) {
-         await createUserProfile(firestore, userCredential.user, data.name, data.userType);
-      }
-
+      
+      await createUserProfile(firestore, userCredential.user, data.name, userType);
+      
       toast({
         title: 'Conta criada com sucesso!',
-        description: 'Você será redirecionado para o login.',
+        description: `Seu perfil foi criado como ${userType === 'admin' ? 'Administrador' : 'Motorista'}. Você será redirecionado para o login.`,
       });
+      
       setActiveTab('login');
       loginForm.setValue('email', data.email);
+
     } catch (error) {
       handleAuthError(error);
     } finally {
@@ -304,6 +318,7 @@ export function AuthForm() {
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
+                      <FormDescription>O primeiro usuário será sempre Administrador.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
