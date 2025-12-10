@@ -130,8 +130,7 @@ service cloud.firestore {
      * @path /maintenanceRequests/{requestId}
      */
     match /maintenanceRequests/{requestId} {
-       allow get, write: if isAdmin();
-       allow list: if isAdmin();
+       allow read, write: if isAdmin();
     }
 
     /**
