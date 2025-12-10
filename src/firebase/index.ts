@@ -3,63 +3,55 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { Auth, getAuth } from 'firebase/auth';
-import { Firestore, getFirestore, clearIndexedDbPersistence, enableIndexedDbPersistence } from 'firebase/firestore'
+import { Firestore, getFirestore, clearIndexedDbPersistence, enableIndexedDbPersistence, initializeFirestore, memoryLocalCache } from 'firebase/firestore';
+
+function getSdks(firebaseApp: FirebaseApp) {
+  const firestore = getFirestore(firebaseApp);
+  const auth = getAuth(firebaseApp);
+  
+  return {
+    firebaseApp,
+    auth,
+    firestore,
+  };
+}
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
-  if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
-    let firebaseApp;
-    let firestore: Firestore;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-      firestore = getFirestore(firebaseApp);
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-      firestore = getFirestore(firebaseApp);
-    }
-
-    // Clear persistence to fix potential corruption issues causing assertion failures.
-    // This is a one-time operation on startup.
-    clearIndexedDbPersistence(firestore).then(() => {
-        enableIndexedDbPersistence(firestore).catch((err) => {
-            if (err.code == 'failed-precondition') {
-                // Multiple tabs open, persistence can only be enabled
-                // in one tab at a time.
-                console.warn('Firestore persistence failed to enable. Multiple tabs open?');
-            } else if (err.code == 'unimplemented') {
-                // The current browser does not support all of the
-                // features required to enable persistence.
-                console.warn('Firestore persistence is not available in this browser.');
-            }
-        });
-    }).catch((err) => {
-        console.error("Failed to clear Firestore persistence:", err);
-    });
-
-    return getSdks(firebaseApp, firestore);
+  if (getApps().length > 0) {
+    return getSdks(getApp());
   }
 
-  // If already initialized, return the SDKs with the already initialized App
-  const app = getApp();
-  return getSdks(app, getFirestore(app));
-}
+  let app;
+  try {
+    // This will throw if the hosting environment is not detected.
+    app = initializeApp({});
+  } catch (e) {
+    app = initializeApp(firebaseConfig);
+  }
 
-export function getSdks(firebaseApp: FirebaseApp, firestore: Firestore) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: firestore
-  };
+  // Initialize Firestore with memory cache for both server and client.
+  initializeFirestore(app, {
+      localCache: memoryLocalCache(),
+  });
+  
+  // This part should only run on the client to enable IndexedDB persistence
+  if (typeof window !== 'undefined') {
+    const firestoreInstance = getFirestore(app);
+    clearIndexedDbPersistence(firestoreInstance)
+      .then(() => enableIndexedDbPersistence(firestoreInstance))
+      .catch((err) => {
+          if (err.code == 'failed-precondition') {
+              console.warn('Firestore persistence failed to enable. This can happen if you have multiple tabs open.');
+          } else if (err.code == 'unimplemented') {
+              console.warn('The current browser does not support all of the features required to enable Firestore persistence.');
+          } else {
+              console.error("Failed to initialize Firestore persistence:", err);
+          }
+      });
+  }
+
+  return getSdks(app);
 }
 
 export * from './provider';
