@@ -14,7 +14,7 @@ export interface Vehicle {
   lastCheck?: Timestamp;
 }
 
-export type ChecklistItemStatus = 'ok' | 'issue' | 'na' | 'sim' | 'nao';
+export type ChecklistItemStatus = 'ok' | 'issue' | 'na';
 
 export type LightVehicleChecklistItemStatus =
   | 'Em excelente estado'
@@ -33,7 +33,7 @@ export interface Checklist {
   type: 'Saída' | 'Retorno';
   date: Timestamp;
   odometer: number;
-  items: Record<string, ChecklistItemStatus | LightVehicleChecklistItemStatus>;
+  items: Record<string, ChecklistItemStatus | LightVehicleChecklistItemStatus | 'sim' | 'nao'>;
   notes?: string;
   checklistType: 'pesada' | 'leve'; // To distinguish between checklist types
 
@@ -52,6 +52,23 @@ export interface Checklist {
   backPhotoUrl?: string;
   leftSidePhotoUrl?: string;
   rightSidePhotoUrl?: string;
+}
+
+export type MaintenanceRequestStatus = 'Pendente' | 'Comprado' | 'Instalado' | 'Cancelado';
+
+export interface MaintenanceRequest {
+  id: string;
+  vehicleId: string;
+  checklistId: string;
+  itemId: string; // e.g., 'farol_esquerdo'
+  itemName: string; // e.g., 'Farol Esquerdo'
+  reportedStatus: string; // e.g., 'issue', 'Avariado'
+  requestStatus: MaintenanceRequestStatus;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  driverName: string;
+  vehiclePlate: string;
+  vehicleModel: string;
 }
 
 

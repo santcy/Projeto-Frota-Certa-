@@ -194,6 +194,10 @@ const CameraCapture = ({
   );
 };
 
+const allHeavyItems = Object.values(CHECKLIST_ITEMS).flat();
+const allItemsMap = new Map(allHeavyItems.map(item => [item.id, item.label]));
+const issueStatuses = ['issue', 'nao'];
+
 
 export function ChecklistFormHeavy() {
   const { toast } = useToast();
@@ -214,7 +218,7 @@ export function ChecklistFormHeavy() {
     // @ts-ignore
     acc[item.id] = item.id === 'limpeza_veiculo' ? 'sim' : 'ok'; // Set default status
     return acc;
-  }, {} as Record<string, ChecklistItemStatus>);
+  }, {} as Record<string, ChecklistItemStatus | 'sim' | 'nao'>);
   
 
   const form = useForm<FormValues>({
@@ -247,12 +251,16 @@ export function ChecklistFormHeavy() {
     }
 
     setIsSubmitting(true);
+    const vehicle = vehicles?.find(v => v.id === data.vehicleId);
+    if (!vehicle) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Veículo não encontrado.'});
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
       const batch = writeBatch(firestore);
-
       const checklistRef = doc(collection(firestore, 'checklists'));
-      const hasIssues = Object.values(data.items).includes('issue');
       
       const newChecklist = {
         ...data,
@@ -260,10 +268,11 @@ export function ChecklistFormHeavy() {
         userId: user.uid,
         driverName: data.driverName,
         date: serverTimestamp(),
-        checklistType: 'pesada' // Add checklist type
+        checklistType: 'pesada' as 'pesada' | 'leve'
       };
       batch.set(checklistRef, newChecklist);
 
+      const hasIssues = Object.values(data.items).some(status => issueStatuses.includes(status));
       const vehicleRef = doc(firestore, 'vehicles', data.vehicleId);
       const vehicleUpdateData = {
         odometer: data.odometer,
@@ -273,11 +282,33 @@ export function ChecklistFormHeavy() {
       };
       batch.update(vehicleRef, vehicleUpdateData);
 
+      // Create maintenance requests for items with issues
+      for (const [itemId, status] of Object.entries(data.items)) {
+        if (issueStatuses.includes(status)) {
+            const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+            const maintenanceRequest = {
+                id: requestRef.id,
+                vehicleId: data.vehicleId,
+                checklistId: checklistRef.id,
+                itemId: itemId,
+                itemName: allItemsMap.get(itemId) || 'Item desconhecido',
+                reportedStatus: status,
+                requestStatus: 'Pendente',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                driverName: data.driverName,
+                vehiclePlate: vehicle.plate,
+                vehicleModel: vehicle.model,
+            };
+            batch.set(requestRef, maintenanceRequest);
+        }
+      }
+
       await batch.commit();
 
       toast({
         title: 'Checklist Enviado!',
-        description: 'O checklist foi registrado com sucesso.',
+        description: 'O checklist e as solicitações de manutenção foram registrados com sucesso.',
         action: <Check className="h-5 w-5 text-green-500" />,
       });
       

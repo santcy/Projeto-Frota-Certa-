@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Accordion,
   AccordionContent,
@@ -204,6 +203,10 @@ const CameraCapture = ({
   );
 };
 
+const allLightItems = Object.values(CHECKLIST_ITEMS_LEVE).flat();
+const allItemsMap = new Map(allLightItems.map(item => [item.id, item.label]));
+const issueStatuses = ['Avariado', 'issue', 'Incompleto', 'Desgastado'];
+
 
 export function ChecklistForm() {
   const { toast } = useToast();
@@ -258,13 +261,16 @@ export function ChecklistForm() {
     }
 
     setIsSubmitting(true);
+    const vehicle = vehicles?.find(v => v.id === data.vehicleId);
+    if (!vehicle) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Veículo não encontrado.'});
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
       const batch = writeBatch(firestore);
-
-      // 1. Create the new checklist document
       const checklistRef = doc(collection(firestore, 'checklists'));
-      const hasIssues = Object.values(data.items).includes('Avariado'); // Example of an issue status
       
       const newChecklist = {
         ...data,
@@ -272,11 +278,11 @@ export function ChecklistForm() {
         userId: user.uid,
         driverName: data.driverName,
         date: serverTimestamp(),
-        checklistType: 'leve' // Add checklist type
+        checklistType: 'leve' as 'pesada' | 'leve'
       };
       batch.set(checklistRef, newChecklist);
 
-      // 2. Update the corresponding vehicle document
+      const hasIssues = Object.values(data.items).some(status => issueStatuses.includes(String(status)));
       const vehicleRef = doc(firestore, 'vehicles', data.vehicleId);
       const vehicleUpdateData = {
         odometer: data.odometer,
@@ -284,13 +290,34 @@ export function ChecklistForm() {
         status: hasIssues ? 'Com Problemas' : 'Operacional',
       };
       batch.update(vehicleRef, vehicleUpdateData);
+      
+      // Create maintenance requests for items with issues
+      for (const [itemId, status] of Object.entries(data.items)) {
+        if (issueStatuses.includes(String(status))) {
+            const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+            const maintenanceRequest = {
+                id: requestRef.id,
+                vehicleId: data.vehicleId,
+                checklistId: checklistRef.id,
+                itemId: itemId,
+                itemName: allItemsMap.get(itemId) || 'Item desconhecido',
+                reportedStatus: String(status),
+                requestStatus: 'Pendente',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                driverName: data.driverName,
+                vehiclePlate: vehicle.plate,
+                vehicleModel: vehicle.model,
+            };
+            batch.set(requestRef, maintenanceRequest);
+        }
+      }
 
-      // Commit the batch
       await batch.commit();
 
       toast({
         title: 'Checklist Enviado!',
-        description: 'O checklist foi registrado com sucesso.',
+        description: 'O checklist e as solicitações de manutenção foram registrados com sucesso.',
         action: <Check className="h-5 w-5 text-green-500" />,
       });
       

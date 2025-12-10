@@ -1,11 +1,10 @@
 'use client';
-import { useMemo } from 'react';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
+  CardDescription,
 } from '@/components/ui/card';
 import {
   Table,
@@ -15,107 +14,97 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useCollection, useFirebase, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import type { Vehicle, Checklist } from '@/lib/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { MoreHorizontal } from 'lucide-react';
+import {
+  useCollection,
+  useFirebase,
+  useMemoFirebase,
+  updateDocumentNonBlocking,
+  WithId,
+} from '@/firebase';
+import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import type { MaintenanceRequest, MaintenanceRequestStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/auth-context';
-import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_LEVE } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
-const allHeavyItems = Object.values(CHECKLIST_ITEMS).flat();
-const allLightItems = Object.values(CHECKLIST_ITEMS_LEVE).flat();
-const allItemsMap = new Map([...allHeavyItems, ...allLightItems].map(item => [item.id, item.label]));
-
-const issueStatuses = ['issue', 'Avariado', 'Desgastado', 'Incompleto', 'nao'];
-
-type RequestedPart = {
-  id: string;
-  itemName: string;
-  status: string;
-  checklistId: string;
-  checklistDate: Date;
-  vehicleId: string;
-  vehiclePlate: string;
-  vehicleModel: string;
-  driverName: string;
+const statusVariants: Record<
+  MaintenanceRequestStatus,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+  Pendente: 'destructive',
+  Comprado: 'outline',
+  Instalado: 'default',
+  Cancelado: 'secondary',
 };
+
+function StatusBadge({ status }: { status: MaintenanceRequestStatus }) {
+  return <Badge variant={statusVariants[status]}>{status}</Badge>;
+}
 
 export default function RequestedPartsPage() {
   const { firestore } = useFirebase();
   const { user } = useAuth();
 
-  const checklistsQuery = useMemoFirebase(
+  const requestsQuery = useMemoFirebase(
     () =>
       firestore && user?.role === 'admin'
-        ? query(collection(firestore, 'checklists'), orderBy('date', 'desc'))
+        ? query(
+            collection(firestore, 'maintenanceRequests'),
+            orderBy('createdAt', 'desc')
+          )
         : null,
     [firestore, user]
   );
-  const { data: checklists, isLoading: isLoadingChecklists } =
-    useCollection<Checklist>(checklistsQuery);
+  const { data: requests, isLoading } =
+    useCollection<MaintenanceRequest>(requestsQuery);
 
-  const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'vehicles') : null),
-    [firestore, user]
-  );
-  const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+  const handleStatusChange = (
+    requestId: string,
+    newStatus: MaintenanceRequestStatus
+  ) => {
+    if (!firestore) return;
+    const requestRef = doc(firestore, 'maintenanceRequests', requestId);
+    updateDocumentNonBlocking(requestRef, {
+      requestStatus: newStatus,
+      updatedAt: serverTimestamp(),
+    });
+  };
 
-  const isLoading = isLoadingChecklists || isLoadingVehicles;
-  
-  const requestedParts: RequestedPart[] = useMemo(() => {
-    if (!checklists || !vehicles) return [];
-
-    const parts: RequestedPart[] = [];
-    const vehiclesMap = new Map(vehicles.map(v => [v.id, v]));
-
-    for (const checklist of checklists) {
-      const vehicle = vehiclesMap.get(checklist.vehicleId);
-      if (!vehicle) continue;
-
-      for (const [itemId, status] of Object.entries(checklist.items)) {
-        if (issueStatuses.includes(String(status))) {
-          parts.push({
-            id: `${checklist.id}-${itemId}`,
-            itemName: allItemsMap.get(itemId) || 'Item desconhecido',
-            status: String(status),
-            checklistId: checklist.id,
-            checklistDate: checklist.date.toDate(),
-            vehicleId: vehicle.id,
-            vehiclePlate: vehicle.plate,
-            vehicleModel: vehicle.model,
-            driverName: checklist.driverName,
-          });
-        }
-      }
-    }
-    return parts;
-  }, [checklists, vehicles]);
-  
   if (user?.role !== 'admin') {
-     return (
-        <div className="max-w-4xl mx-auto text-center py-10">
-          <h1 className="text-2xl font-bold">Acesso Negado</h1>
-          <p className="text-muted-foreground">Você não tem permissão para visualizar esta página.</p>
-        </div>
-      );
+    return (
+      <div className="max-w-4xl mx-auto text-center py-10">
+        <h1 className="text-2xl font-bold">Acesso Negado</h1>
+        <p className="text-muted-foreground">
+          Você não tem permissão para visualizar esta página.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Peças e Itens Solicitados
+          Solicitações de Manutenção
         </h1>
         <p className="text-muted-foreground">
-          Lista de todos os itens reportados com avaria ou problema nos checklists.
+          Gerencie todos os itens reportados com avaria ou problema nos
+          checklists.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Solicitações de Manutenção</CardTitle>
+          <CardTitle>Peças e Itens Solicitados</CardTitle>
           <CardDescription>
             Itens que requerem atenção com base nos últimos checklists.
           </CardDescription>
@@ -126,37 +115,78 @@ export default function RequestedPartsPage() {
               <TableRow>
                 <TableHead>Item</TableHead>
                 <TableHead>Veículo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data da Solicitação</TableHead>
+                <TableHead>Data</TableHead>
                 <TableHead>Motorista</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-28" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-28" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-20" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-8 w-8 ml-auto" />
+                    </TableCell>
                   </TableRow>
                 ))
-              ) : requestedParts.length > 0 ? (
-                requestedParts.map((part) => (
-                  <TableRow key={part.id}>
-                    <TableCell className="font-medium">{part.itemName}</TableCell>
-                    <TableCell>{part.vehiclePlate} - {part.vehicleModel}</TableCell>
+              ) : requests && requests.length > 0 ? (
+                requests.map((req) => (
+                  <TableRow key={req.id}>
+                    <TableCell className="font-medium">{req.itemName}</TableCell>
                     <TableCell>
-                      <Badge variant="destructive">{part.status}</Badge>
+                      {req.vehiclePlate} - {req.vehicleModel}
                     </TableCell>
-                    <TableCell>{part.checklistDate.toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>{part.driverName}</TableCell>
+                    <TableCell>
+                      {format(req.createdAt.toDate(), 'dd/MM/yyyy')}
+                    </TableCell>
+                    <TableCell>{req.driverName}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={req.requestStatus} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {(
+                            ['Pendente', 'Comprado', 'Instalado', 'Cancelado'] as MaintenanceRequestStatus[]
+                          ).map((status) => (
+                            <DropdownMenuItem
+                              key={status}
+                              onClick={() => handleStatusChange(req.id, status)}
+                              disabled={req.requestStatus === status}
+                            >
+                              Marcar como {status}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     Nenhum item com problema encontrado nos checklists.
                   </TableCell>
                 </TableRow>
