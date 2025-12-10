@@ -9,6 +9,7 @@ import {
   Truck,
   Wrench,
   Archive,
+  ClipboardList,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -26,6 +27,7 @@ import { useAuth } from '@/context/auth-context';
 const allNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'driver'] },
   { href: '/vehicles', label: 'Veículos', icon: Truck, roles: ['admin'] },
+  { href: '/requests', label: 'Peças Solicitadas', icon: ClipboardList, roles: ['admin'] },
   { href: '/checklist/light', label: 'Checklist Leve', icon: ClipboardCheck, roles: ['admin', 'driver'] },
   { href: '/checklist/heavy', label: 'Checklist Pesado', icon: ClipboardCheck, roles: ['admin', 'driver'] },
   { href: '/reports/light/unified', label: 'Unificado Leve', icon: Archive, roles: ['admin'] },
