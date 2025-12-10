@@ -120,7 +120,7 @@ export function AuthForm() {
         title: 'Login bem-sucedido!',
         description: 'Você será redirecionado em breve.',
       });
-      router.push('/');
+      router.push('/dashboard');
     } catch (error) {
       handleAuthError(error);
     } finally {
