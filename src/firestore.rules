@@ -61,15 +61,6 @@ service cloud.firestore {
     function isExistingDoc() {
       return resource != null;
     }
-
-    /**
-     * Checks if the requesting user has the 'admin' role.
-     * This performs a document read and should be used for high-privilege actions on single documents.
-     * WARNING: This function CANNOT be used in `allow list` rules.
-     */
-    function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
-    }
     
     /**
      * Validates that the user is the creator of a new document.
@@ -86,7 +77,7 @@ service cloud.firestore {
       return requestData.id == resourceData.id
           && requestData.vehicleId == resourceData.vehicleId
           // Allow userId to be changed by an admin if needed, but not by the user themselves
-          && (isAdmin() || requestData.userId == resourceData.userId);
+          && (requestData.userId == resourceData.userId);
     }
     
     /**
@@ -94,11 +85,7 @@ service cloud.firestore {
      * @path /users/{userId}
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isOwner(userId) || isAdmin();
+      allow read, write: if isSignedIn();
     }
     
     /**
@@ -106,10 +93,7 @@ service cloud.firestore {
      * @path /vehicles/{vehicleId}
      */
     match /vehicles/{vehicleId} {
-      allow get, list: if isSignedIn();
-      allow create: if isAdmin() && request.resource.data.id == vehicleId;
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow read, write: if isSignedIn();
     }
     
     /**
@@ -117,14 +101,7 @@ service cloud.firestore {
      * @path /checklists/{checklistsId}
      */
     match /checklists/{checklistsId} {
-      allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
-      // Any authenticated user can list checklists.
-      // Client-side code is responsible for filtering to show only relevant data.
-      // The `get` rule above protects individual documents from unauthorized access.
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
-      allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
-      allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
+      allow read, write: if isSignedIn();
     }
 
     /**
@@ -132,7 +109,7 @@ service cloud.firestore {
      * @path /maintenanceRequests/{requestId}
      */
     match /maintenanceRequests/{requestId} {
-       allow read, write: if isAdmin();
+       allow read, write: if isSignedIn();
     }
 
     /**

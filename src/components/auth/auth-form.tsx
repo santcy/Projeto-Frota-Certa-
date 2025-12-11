@@ -138,13 +138,7 @@ export function AuthForm() {
     }
 
     try {
-      // Check if any user exists to determine if this is the first user
-      const usersCollection = collection(firestore, 'users');
-      const usersSnapshot = await getDocs(usersCollection);
-      const isFirstUser = usersSnapshot.empty;
-      
-      // If it's the first user, force role to admin
-      const userType = isFirstUser ? 'admin' : data.userType;
+      const userType = data.userType;
 
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -319,7 +313,6 @@ export function AuthForm() {
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
-                      <FormDescription>O primeiro usuário será sempre Administrador.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -107,7 +107,7 @@ export default function RequestedPartsPage() {
 
   const requestsQuery = useMemoFirebase(
     () =>
-      firestore && user?.role === 'admin'
+      firestore && user
         ? query(
             collection(firestore, 'maintenanceRequests'),
             orderBy('createdAt', 'desc')
@@ -118,7 +118,7 @@ export default function RequestedPartsPage() {
   const { data: requests, isLoading: isRequestsLoading } =
     useCollection<MaintenanceRequest>(requestsQuery);
 
-  const isLoading = isAuthLoading || (user?.role === 'admin' && isRequestsLoading);
+  const isLoading = isAuthLoading || isRequestsLoading;
 
   const handleStatusChange = (
     requestId: string,
@@ -146,17 +146,6 @@ export default function RequestedPartsPage() {
             </div>
             <RequestsPageSkeleton />
         </div>
-    );
-  }
-  
-  if (user?.role !== 'admin') {
-    return (
-      <div className="max-w-4xl mx-auto text-center py-10">
-        <h1 className="text-2xl font-bold">Acesso Negado</h1>
-        <p className="text-muted-foreground">
-          Você não tem permissão para visualizar esta página.
-        </p>
-      </div>
     );
   }
 

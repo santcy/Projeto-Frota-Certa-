@@ -174,7 +174,7 @@ export default function UnifiedReportLightPage() {
             Visualize um resumo de todos os problemas reportados para a frota leve.
             </p>
         </div>
-        {user?.role === 'admin' && !isLoading && Object.keys(reportData).length > 0 && (
+        {!isLoading && Object.keys(reportData).length > 0 && (
             <Button onClick={handleDownload}>
                 <Download className="mr-2 h-4 w-4" />
                 Baixar Relatório

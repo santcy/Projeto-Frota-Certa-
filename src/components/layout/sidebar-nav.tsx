@@ -25,13 +25,13 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth-context';
 
 const allNavItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'driver'] },
-  { href: '/vehicles', label: 'Veículos', icon: Truck, roles: ['admin', 'driver'] },
-  { href: '/requests', label: 'Peças Solicitadas', icon: ClipboardList, roles: ['admin'] },
-  { href: '/checklist/light', label: 'Checklist Leve', icon: ClipboardCheck, roles: ['admin', 'driver'] },
-  { href: '/checklist/heavy', label: 'Checklist Pesado', icon: ClipboardCheck, roles: ['admin', 'driver'] },
-  { href: '/reports/light/unified', label: 'Unificado Leve', icon: Archive, roles: ['admin'] },
-  { href: '/reports/heavy/unified', label: 'Unificado Pesado', icon: Archive, roles: ['admin'] },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/vehicles', label: 'Veículos', icon: Truck },
+  { href: '/requests', label: 'Peças Solicitadas', icon: ClipboardList },
+  { href: '/checklist/light', label: 'Checklist Leve', icon: ClipboardCheck },
+  { href: '/checklist/heavy', label: 'Checklist Pesado', icon: ClipboardCheck },
+  { href: '/reports/light/unified', label: 'Unificado Leve', icon: Archive },
+  { href: '/reports/heavy/unified', label: 'Unificado Pesado', icon: Archive },
 ];
 
 export function SidebarNav() {
@@ -39,7 +39,7 @@ export function SidebarNav() {
   const { open } = useSidebar();
   const { user } = useAuth();
 
-  const navItems = allNavItems.filter(item => user && item.roles.includes(user.role));
+  const navItems = allNavItems;
 
   return (
     <>

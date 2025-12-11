@@ -242,14 +242,12 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
           </h1>
           <p className="text-muted-foreground">{vehicle.model}</p>
         </div>
-        {user?.role === 'admin' && (
-          <Button asChild>
-            <Link href={`/vehicles/${vehicle.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Editar Veículo
-            </Link>
-          </Button>
-        )}
+        <Button asChild>
+          <Link href={`/vehicles/${vehicle.id}/edit`}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar Veículo
+          </Link>
+        </Button>
       </div>
 
       <Card>
@@ -359,18 +357,16 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                         </div>
                       </div>
 
-                      {user?.role === 'admin' && (
-                        <div className="pt-4 flex justify-end">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDownloadChecklist(checklist, vehicle)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            Baixar Checklist
-                          </Button>
-                        </div>
-                      )}
+                      <div className="pt-4 flex justify-end">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDownloadChecklist(checklist, vehicle)}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Baixar Checklist
+                        </Button>
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

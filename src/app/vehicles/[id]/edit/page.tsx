@@ -67,16 +67,6 @@ export default function EditVehiclePage({ params }: { params: { id: string } }) 
   if (!vehicle) {
     notFound();
   }
-  
-  // A simple guard to prevent non-admins from accessing the page directly.
-  if (user?.role !== 'admin') {
-     return (
-        <div className="max-w-4xl mx-auto text-center py-10">
-          <h1 className="text-2xl font-bold">Acesso Negado</h1>
-          <p className="text-muted-foreground">Você não tem permissão para editar veículos.</p>
-        </div>
-      );
-  }
 
   return (
     <div className="max-w-4xl mx-auto">

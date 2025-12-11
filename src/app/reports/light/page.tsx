@@ -250,7 +250,7 @@ export default function ReportsLightPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {user?.role === 'admin' && vehicle && (
+                          {vehicle && (
                               <Button 
                                 variant="ghost" 
                                 size="icon"
