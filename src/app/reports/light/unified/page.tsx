@@ -212,30 +212,32 @@ export default function UnifiedReportLightPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Motorista</TableHead>
-                        <TableHead>Problemas Reportados</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {checklistsWithIssues.map(({ checklist, issues }) => (
-                        <TableRow key={checklist.id}>
-                          <TableCell>{checklist.date.toDate().toLocaleDateString('pt-BR')}</TableCell>
-                          <TableCell>{checklist.driverName}</TableCell>
-                          <TableCell>
-                            <ul className="list-disc pl-5 space-y-1">
-                                {issues.map(issue => (
-                                    <li key={issue.id}>{issue.label}</li>
-                                ))}
-                            </ul>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Motorista</TableHead>
+                          <TableHead>Problemas Reportados</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {checklistsWithIssues.map(({ checklist, issues }) => (
+                          <TableRow key={checklist.id}>
+                            <TableCell>{checklist.date.toDate().toLocaleDateString('pt-BR')}</TableCell>
+                            <TableCell>{checklist.driverName}</TableCell>
+                            <TableCell>
+                              <ul className="list-disc pl-5 space-y-1">
+                                  {issues.map(issue => (
+                                      <li key={issue.id}>{issue.label}</li>
+                                  ))}
+                              </ul>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             );

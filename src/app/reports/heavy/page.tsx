@@ -168,102 +168,104 @@ export default function ReportsHeavyPage() {
           <CardTitle>Todos os Registros (Frota Pesada)</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Veículo</TableHead>
-                <TableHead>Motorista</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Odômetro</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading
-                ? Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <Skeleton className="h-5 w-32" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-28" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-20" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-6 w-24" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="h-8 w-8 ml-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : checklists?.map((checklist) => {
-                    const vehicle = vehicles?.find(
-                      (v) => v.id === checklist.vehicleId
-                    );
-                    const hasIssues = Object.values(checklist.items).includes(
-                      'issue'
-                    );
-
-                    return (
-                      <TableRow key={checklist.id}>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Veículo</TableHead>
+                  <TableHead>Motorista</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Odômetro</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
                         <TableCell>
-                          {checklist.date.toDate().toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {vehicle?.plate || 'N/A'}
-                        </TableCell>
-                        <TableCell>{checklist.driverName}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              checklist.type === 'Saída'
-                                ? 'outline'
-                                : 'secondary'
-                            }
-                          >
-                            {checklist.type}
-                          </Badge>
+                          <Skeleton className="h-5 w-32" />
                         </TableCell>
                         <TableCell>
-                          {checklist.odometer.toLocaleString('pt-BR')} km
+                          <Skeleton className="h-5 w-24" />
                         </TableCell>
                         <TableCell>
-                          <Badge variant={hasIssues ? 'destructive' : 'default'}>
-                            {hasIssues ? 'Com Problemas' : 'OK'}
-                          </Badge>
+                          <Skeleton className="h-5 w-28" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-5 w-16" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-5 w-20" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-6 w-24" />
                         </TableCell>
                         <TableCell className="text-right">
-                          {vehicle && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleDownloadChecklist(checklist, vehicle)}
-                              >
-                                <Download className="h-4 w-4" />
-                                <span className="sr-only">Baixar PDF</span>
-                              </Button>
-                          )}
+                          <Skeleton className="h-8 w-8 ml-auto" />
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-            </TableBody>
-          </Table>
+                    ))
+                  : checklists?.map((checklist) => {
+                      const vehicle = vehicles?.find(
+                        (v) => v.id === checklist.vehicleId
+                      );
+                      const hasIssues = Object.values(checklist.items).includes(
+                        'issue'
+                      );
+
+                      return (
+                        <TableRow key={checklist.id}>
+                          <TableCell>
+                            {checklist.date.toDate().toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {vehicle?.plate || 'N/A'}
+                          </TableCell>
+                          <TableCell>{checklist.driverName}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                checklist.type === 'Saída'
+                                  ? 'outline'
+                                  : 'secondary'
+                              }
+                            >
+                              {checklist.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {checklist.odometer.toLocaleString('pt-BR')} km
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={hasIssues ? 'destructive' : 'default'}>
+                              {hasIssues ? 'Com Problemas' : 'OK'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {vehicle && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => handleDownloadChecklist(checklist, vehicle)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                  <span className="sr-only">Baixar PDF</span>
+                                </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

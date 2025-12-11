@@ -60,42 +60,44 @@ function RequestsPageSkeleton() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Item</TableHead>
-                            <TableHead>Veículo</TableHead>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Motorista</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Array.from({ length: 10 }).map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell>
-                            <Skeleton className="h-5 w-32" />
-                            </TableCell>
-                            <TableCell>
-                            <Skeleton className="h-5 w-24" />
-                            </TableCell>
-                            <TableCell>
-                            <Skeleton className="h-5 w-28" />
-                            </TableCell>
-                            <TableCell>
-                            <Skeleton className="h-5 w-28" />
-                            </TableCell>
-                            <TableCell>
-                            <Skeleton className="h-6 w-20" />
-                            </TableCell>
-                            <TableCell className="text-right">
-                            <Skeleton className="h-8 w-8 ml-auto" />
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Item</TableHead>
+                                <TableHead>Veículo</TableHead>
+                                <TableHead>Data</TableHead>
+                                <TableHead>Motorista</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Ações</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Array.from({ length: 10 }).map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell>
+                                <Skeleton className="h-5 w-32" />
+                                </TableCell>
+                                <TableCell>
+                                <Skeleton className="h-5 w-24" />
+                                </TableCell>
+                                <TableCell>
+                                <Skeleton className="h-5 w-28" />
+                                </TableCell>
+                                <TableCell>
+                                <Skeleton className="h-5 w-28" />
+                                </TableCell>
+                                <TableCell>
+                                <Skeleton className="h-6 w-20" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                <Skeleton className="h-8 w-8 ml-auto" />
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );
@@ -169,66 +171,68 @@ export default function RequestedPartsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead>Veículo</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Motorista</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests && requests.length > 0 ? (
-                requests.map((req) => (
-                  <TableRow key={req.id}>
-                    <TableCell className="font-medium">{req.itemName}</TableCell>
-                    <TableCell>
-                      {req.vehiclePlate} - {req.vehicleModel}
-                    </TableCell>
-                    <TableCell>
-                      {format(req.createdAt.toDate(), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>{req.driverName}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={req.requestStatus} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {(
-                            ['Pendente', 'Comprado', 'Instalado', 'Cancelado'] as MaintenanceRequestStatus[]
-                          ).map((status) => (
-                            <DropdownMenuItem
-                              key={status}
-                              onClick={() => handleStatusChange(req.id, status)}
-                              disabled={req.requestStatus === status}
-                            >
-                              Marcar como {status}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Veículo</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Motorista</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {requests && requests.length > 0 ? (
+                  requests.map((req) => (
+                    <TableRow key={req.id}>
+                      <TableCell className="font-medium">{req.itemName}</TableCell>
+                      <TableCell>
+                        {req.vehiclePlate} - {req.vehicleModel}
+                      </TableCell>
+                      <TableCell>
+                        {format(req.createdAt.toDate(), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell>{req.driverName}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={req.requestStatus} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {(
+                              ['Pendente', 'Comprado', 'Instalado', 'Cancelado'] as MaintenanceRequestStatus[]
+                            ).map((status) => (
+                              <DropdownMenuItem
+                                key={status}
+                                onClick={() => handleStatusChange(req.id, status)}
+                                disabled={req.requestStatus === status}
+                              >
+                                Marcar como {status}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Nenhum item com problema encontrado nos checklists.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    Nenhum item com problema encontrado nos checklists.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

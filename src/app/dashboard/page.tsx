@@ -145,52 +145,54 @@ export default function Dashboard() {
           <CardTitle>Alertas Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Veículo</TableHead>
-                <TableHead>Motorista</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Problema</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingChecklists ? (
-                 Array.from({ length: 3 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                    </TableRow>
-                  ))
-              ) : recentAlerts && recentAlerts.length > 0 ? (
-                recentAlerts.map((alert) => {
-                  const vehicle = vehicles?.find((v) => v.id === alert.vehicleId);
-                  return (
-                    <TableRow key={alert.id}>
-                      <TableCell className="font-medium">
-                        {vehicle?.plate || 'N/A'}
-                      </TableCell>
-                      <TableCell>{alert.driverName}</TableCell>
-                      <TableCell>
-                        {alert.date.toDate().toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell className="text-destructive">
-                        {alert.notes || 'Problema reportado no checklist.'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    Nenhum alerta recente.
-                  </TableCell>
+                  <TableHead>Veículo</TableHead>
+                  <TableHead>Motorista</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Problema</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isLoadingChecklists ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      </TableRow>
+                    ))
+                ) : recentAlerts && recentAlerts.length > 0 ? (
+                  recentAlerts.map((alert) => {
+                    const vehicle = vehicles?.find((v) => v.id === alert.vehicleId);
+                    return (
+                      <TableRow key={alert.id}>
+                        <TableCell className="font-medium">
+                          {vehicle?.plate || 'N/A'}
+                        </TableCell>
+                        <TableCell>{alert.driverName}</TableCell>
+                        <TableCell>
+                          {alert.date.toDate().toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell className="text-destructive">
+                          {alert.notes || 'Problema reportado no checklist.'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">
+                      Nenhum alerta recente.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -511,7 +511,7 @@ export function ChecklistForm() {
             ([sectionKey, sectionName]) => (
               <AccordionItem value={sectionKey} key={sectionKey}>
                 <AccordionTrigger>{sectionName}</AccordionTrigger>
-                <AccordionContent className="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                <AccordionContent className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   {CHECKLIST_ITEMS_LEVE[
                     sectionKey as keyof typeof CHECKLIST_ITEMS_LEVE
                   ].map((item) => (
