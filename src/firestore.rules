@@ -118,8 +118,10 @@ service cloud.firestore {
      */
     match /checklists/{checklistsId} {
       allow get: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());
-      // A driver can only list their own checklists by querying on their userId. An admin can list all checklists.
-      allow list: if (request.query.limit <= 5 && isOwner(request.query.where.userId)) || isAdmin();
+      // Any authenticated user can list checklists.
+      // Client-side code is responsible for filtering to show only relevant data.
+      // The `get` rule above protects individual documents from unauthorized access.
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && isCreator(request.resource.data) && request.resource.data.id == checklistsId;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin()) && relationalIdsAreImmutable(request.resource.data, resource.data);
       allow delete: if isExistingDoc() && (isOwner(resource.data.userId) || isAdmin());

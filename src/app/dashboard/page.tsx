@@ -74,20 +74,21 @@ export default function Dashboard() {
 
   const checklistsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-
-    const baseQuery = collection(firestore, 'checklists');
     
-    // Admins see all recent checklists, drivers see only their own
-    if (user.role === 'admin') {
-      return query(baseQuery, orderBy('date', 'desc'), limit(50));
-    }
-    
-    return query(baseQuery, where('userId', '==', user.uid), orderBy('date', 'desc'), limit(5));
+    // Both admins and drivers fetch all checklists ordered by date
+    // Filtering for drivers will be done on the client-side
+    return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
       
   }, [firestore, user]);
 
-  const { data: recentChecklists, isLoading: isLoadingChecklists } =
+  const { data: allRecentChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
+
+  // Client-side filtering
+  const recentChecklists = user?.role === 'admin' 
+    ? allRecentChecklists 
+    : allRecentChecklists?.filter(c => c.userId === user.uid).slice(0, 5);
+
 
   const vehiclesWithProblems =
     vehicles?.filter((v) => v.status === 'Com Problemas').length ?? 0;
