@@ -6,7 +6,7 @@ export default function ChecklistLightPage() {
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Novo Checklist de Veículo Leve</CardTitle>
+          <CardTitle className="text-2xl">Novo Checklist Frota Leve</CardTitle>
           <CardDescription>
             Preencha todos os campos para registrar a vistoria do veículo.
           </CardDescription>
