@@ -103,7 +103,7 @@ export default function Dashboard() {
     );
   };
   
-  const recentAlerts = recentChecklists?.filter(hasIssues).slice(0, 5);
+  const recentAlerts = recentChecklists?.filter(hasIssues).sort((a,b) => b.date.toMillis() - a.date.toMillis()).slice(0, 5);
 
 
   return (
