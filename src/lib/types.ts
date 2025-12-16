@@ -54,25 +54,6 @@ export interface Checklist {
   rightSidePhotoUrl?: string;
 }
 
-export type MaintenanceRequestStatus = 'Pendente' | 'Comprado' | 'Instalado' | 'Cancelado';
-
-export interface MaintenanceRequest {
-  id: string;
-  vehicleId: string;
-  checklistId: string;
-  itemId: string; // e.g., 'farol_esquerdo'
-  itemName: string; // e.g., 'Farol Esquerdo'
-  reportedStatus: string; // e.g., 'issue', 'Avariado'
-  requestStatus: MaintenanceRequestStatus;
-  quantity: number;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  driverName: string;
-  vehiclePlate: string;
-  vehicleModel: string;
-}
-
-
 // Heavy Fleet Checklist (Original)
 export const CHECKLIST_ITEMS_SECTIONS = {
   iluminacao: 'Iluminação',

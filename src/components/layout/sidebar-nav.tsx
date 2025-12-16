@@ -73,11 +73,6 @@ export function SidebarNav() {
               <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Peças Solicitadas' }}>
-              <Link href="/requests"><ClipboardList /><span>Peças Solicitadas</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
 
           <SidebarMenuItem>
             <Collapsible>

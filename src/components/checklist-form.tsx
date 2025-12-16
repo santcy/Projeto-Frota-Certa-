@@ -290,35 +290,12 @@ export function ChecklistForm() {
         status: hasIssues ? 'Com Problemas' : 'Operacional',
       };
       batch.update(vehicleRef, vehicleUpdateData);
-      
-      // Create maintenance requests for items with issues
-      for (const [itemId, status] of Object.entries(data.items)) {
-        if (issueStatuses.includes(String(status))) {
-            const requestRef = doc(collection(firestore, 'maintenanceRequests'));
-            const maintenanceRequest = {
-                id: requestRef.id,
-                vehicleId: data.vehicleId,
-                checklistId: checklistRef.id,
-                itemId: itemId,
-                itemName: allItemsMap.get(itemId) || 'Item desconhecido',
-                reportedStatus: String(status),
-                requestStatus: 'Pendente',
-                quantity: 1,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                driverName: data.driverName,
-                vehiclePlate: vehicle.plate,
-                vehicleModel: vehicle.model,
-            };
-            batch.set(requestRef, maintenanceRequest);
-        }
-      }
 
       await batch.commit();
 
       toast({
         title: 'Checklist Enviado!',
-        description: 'O checklist e as solicitações de manutenção foram registrados com sucesso.',
+        description: 'O checklist foi registrado com sucesso.',
         action: <Check className="h-5 w-5 text-green-500" />,
       });
       
@@ -342,7 +319,7 @@ export function ChecklistForm() {
     } catch (error) {
       console.error('Error submitting checklist:', error);
       const permissionError = new FirestorePermissionError({
-        path: `checklists/${batch.toString()}`,
+        path: `checklists`,
         operation: 'write',
         requestResourceData: data,
       });

@@ -189,83 +189,6 @@
         "itemName",
         "status"
       ]
-    },
-    "MaintenanceRequest": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MaintenanceRequest",
-      "type": "object",
-      "description": "Represents a maintenance request for a specific vehicle part or item, generated from a checklist.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the MaintenanceRequest entity."
-        },
-        "vehicleId": {
-          "type": "string",
-          "description": "The ID of the vehicle this request is for."
-        },
-        "checklistId": {
-          "type": "string",
-          "description": "The ID of the checklist that generated this request."
-        },
-        "itemId": {
-          "type": "string",
-          "description": "The ID of the checklist item that has an issue (e.g., 'farol_esquerdo')."
-        },
-        "itemName": {
-          "type": "string",
-          "description": "The human-readable name of the item (e.g., 'Farol Esquerdo')."
-        },
-        "reportedStatus": {
-          "type": "string",
-          "description": "The status of the item as reported in the checklist (e.g., 'Avariado', 'issue')."
-        },
-        "requestStatus": {
-          "type": "string",
-          "description": "The current status of the maintenance request.",
-          "enum": ["Pendente", "Comprado", "Instalado", "Cancelado"]
-        },
-        "quantity": {
-            "type": "number",
-            "description": "The quantity of the item requested."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "The timestamp when the request was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "The timestamp when the request was last updated.",
-          "format": "date-time"
-        },
-        "driverName": {
-          "type": "string",
-          "description": "The name of the driver who reported the issue."
-        },
-        "vehiclePlate": {
-          "type": "string",
-          "description": "The license plate of the vehicle."
-        },
-        "vehicleModel": {
-          "type": "string",
-          "description": "The model of the vehicle."
-        }
-      },
-      "required": [
-        "id",
-        "vehicleId",
-        "checklistId",
-        "itemId",
-        "itemName",
-        "reportedStatus",
-        "requestStatus",
-        "quantity",
-        "createdAt",
-        "driverName",
-        "vehiclePlate",
-        "vehicleModel"
-      ]
     }
   },
   "auth": {
@@ -320,22 +243,6 @@
             {
               "name": "checklistsId",
               "description": "The unique identifier for the checklists."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/maintenanceRequests/{maintenanceRequestId}",
-        "definition": {
-          "entityName": "MaintenanceRequest",
-          "schema": {
-            "$ref": "#/backend/entities/MaintenanceRequest"
-          },
-          "description": "Stores maintenance requests generated from checklists. Admins can manage these requests.",
-          "params": [
-            {
-              "name": "maintenanceRequestId",
-              "description": "The unique identifier for the maintenance request."
             }
           ]
         }

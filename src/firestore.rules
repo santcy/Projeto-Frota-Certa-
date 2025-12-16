@@ -10,7 +10,6 @@
  * - /users/{userId}: Private user profile documents.
  * - /vehicles/{vehicleId}: A top-level collection of all vehicles in the system.
  * - /checklists/{checklistId}: A top-level collection for all checklists.
- * - /maintenanceRequests/{requestId}: A top-level collection for maintenance requests.
  *
  * Key Security Decisions:
  * - Admin Role Check: Since authorization roles ('admin', 'driver') are stored on the /users/{userId} document,
@@ -102,14 +101,6 @@ service cloud.firestore {
      */
     match /checklists/{checklistsId} {
       allow read, write: if isSignedIn();
-    }
-
-    /**
-     * @description Manages maintenance requests. Only admins can read, list, create, and update these requests.
-     * @path /maintenanceRequests/{requestId}
-     */
-    match /maintenanceRequests/{requestId} {
-       allow read, write: if isSignedIn();
     }
 
     /**
