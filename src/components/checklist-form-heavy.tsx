@@ -257,9 +257,9 @@ export function ChecklistFormHeavy() {
         setIsSubmitting(false);
         return;
     }
-
+    
+    const batch = writeBatch(firestore);
     try {
-      const batch = writeBatch(firestore);
       const checklistRef = doc(collection(firestore, 'checklists'));
       
       const newChecklist = {
@@ -331,7 +331,7 @@ export function ChecklistFormHeavy() {
     } catch (error) {
       console.error('Error submitting checklist:', error);
       const permissionError = new FirestorePermissionError({
-        path: 'batch-write',
+        path: `checklists/${batch.toString()}`,
         operation: 'write',
         requestResourceData: data,
       });
