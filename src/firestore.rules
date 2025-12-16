@@ -1,111 +1,12 @@
 /**
- * Core Philosophy:
- * This ruleset establishes a hybrid security model for the Rota Certa application.
- * It combines strict user-ownership for personal data with a role-based system for shared resources.
- * User profiles are private to each individual. Vehicles are public to all authenticated users for reading,
- * but can only be managed by 'admin' users. Checklists and their items are owned by the 'driver' who
- * creates them, but can also be overseen by 'admins'.
- *
- * Data Structure:
- * - /users/{userId}: Private user profile documents.
- * - /vehicles/{vehicleId}: A top-level collection of all vehicles in the system.
- * - /checklists/{checklistId}: A top-level collection for all checklists.
- *
- * Key Security Decisions:
- * - Admin Role Check: Since authorization roles ('admin', 'driver') are stored on the /users/{userId} document,
- *   rules for administrative actions (like modifying vehicles) must perform a `get()` operation on the user's
- *   profile to verify their role. This is a deliberate trade-off for security and centralization of roles.
- * - User Listing Disabled: To protect user privacy, it is not possible to list all documents in the `/users` collection.
- * - Public Vehicle Listing: Any authenticated user can list and view vehicle details, allowing drivers to select
- *   from available vehicles. However, only admins can modify the vehicle list.
- * - Creator Ownership for Checklists: The user who creates a checklist is its owner and has full control over it.
- *   Admins have override privileges to view and manage any checklist.
- * - List Operations: `list` rules CANNOT use `get()` or `exists()`. Therefore, list queries must be secured
- *   either by allowing full reads for certain roles or by enforcing query constraints (e.g., `request.query.where`).
- *
- * Denormalization for Authorization:
- * The `Checklist` document contains a denormalized `userId` field. This is critical for security, as it allows rules
- * to verify ownership directly on the document without needing extra database reads, resulting in faster and more
- * secure operations.
- *
- * Structural Segregation:
- * The data is segregated into distinct collections (/users, /vehicles, /checklists, etc). This clear separation ensures that security
- * rules are simple and that queries for public data (vehicles) do not accidentally expose private data (user profiles).
+ * WARNING: These rules are completely insecure and allow public access.
+ * This is for development or specific use cases only.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper Functions
-    
-    /**
-     * Returns true if the user is authenticated.
-     */
-    function isSignedIn() {
-      return request.auth != null;
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
-
-    /**
-     * Returns true if the authenticated user's UID matches the provided userId.
-     * This is the foundation of the user-ownership model.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * Checks if a document currently exists. Used to secure all update and delete
-     * operations, preventing modifications to non-existent data.
-     */
-    function isExistingDoc() {
-      return resource != null;
-    }
-    
-    /**
-     * Validates that the user is the creator of a new document.
-     * Ensures the 'userId' field on a new document matches the creator's auth UID.
-     */
-    function isCreator(docData) {
-      return docData.userId == request.auth.uid;
-    }
-    
-    /**
-     * Validates that critical relational IDs are not changed during an update.
-     */
-    function relationalIdsAreImmutable(requestData, resourceData) {
-      return requestData.id == resourceData.id
-          && requestData.vehicleId == resourceData.vehicleId
-          // Allow userId to be changed by an admin if needed, but not by the user themselves
-          && (requestData.userId == resourceData.userId);
-    }
-    
-    /**
-     * @description Manages user profile data. Only the user themselves can create, view, or edit their own profile.
-     * @path /users/{userId}
-     */
-    match /users/{userId} {
-      allow read, write: if isSignedIn();
-    }
-    
-    /**
-     * @description Manages vehicle data. Any authenticated user can read vehicle info, but only admins can create, update, or delete vehicles.
-     * @path /vehicles/{vehicleId}
-     */
-    match /vehicles/{vehicleId} {
-      allow read, write: if isSignedIn();
-    }
-    
-    /**
-     * @description Manages vehicle checklists. A user can create checklists, but can only modify checklists they created. Admins have full access.
-     * @path /checklists/{checklistsId}
-     */
-    match /checklists/{checklistsId} {
-      allow read, write: if isSignedIn();
-    }
-
-    /**
-     * @description This path is not used as checklist items are embedded in the checklist document.
-     */
-    // This path is intentionally left without rules as items are part of the checklists document.
   }
 }
