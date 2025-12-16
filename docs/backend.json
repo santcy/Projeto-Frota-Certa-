@@ -22,6 +22,10 @@
           "type": "string",
           "description": "The email address of the user.",
           "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the user."
         }
       },
       "required": [
@@ -79,68 +83,61 @@
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:N Checklist)"
         },
-        "dateOut": {
+        "date": {
           "type": "string",
-          "description": "The date the vehicle was checked out.",
+          "description": "The date the vehicle was checked.",
           "format": "date-time"
         },
-        "timeOut": {
+        "type": {
           "type": "string",
-          "description": "The time the vehicle was checked out."
+          "enum": ["Saída", "Retorno"]
         },
-        "odometerOut": {
+        "odometer": {
           "type": "number",
-          "description": "The odometer reading when the vehicle was checked out."
-        },
-        "fuelLevelOut": {
-          "type": "number",
-          "description": "The fuel level when the vehicle was checked out."
-        },
-        "dateIn": {
-          "type": "string",
-          "description": "The date the vehicle was checked in.",
-          "format": "date-time"
-        },
-        "timeIn": {
-          "type": "string",
-          "description": "The time the vehicle was checked in."
-        },
-        "odometerIn": {
-          "type": "number",
-          "description": "The odometer reading when the vehicle was checked in."
+          "description": "The odometer reading when the vehicle was checked."
         },
         "status": {
           "type": "string",
           "description": "Overall status of the vehicle based on checklist (e.g., 'Good', 'Needs Maintenance')."
         },
-        "dashboardPhotoUrl": {
+        "notes": {
           "type": "string",
-          "description": "URL of the dashboard photo.",
+          "description": "Additional notes from the driver."
+        },
+        "checklistType": {
+          "type": "string",
+          "enum": ["pesada", "leve"]
+        },
+        "fuelLevelPhotoUrl": {
+          "type": "string",
           "format": "uri"
         },
-        "dashboardPhotoUrl2": {
+        "kmPhotoUrl": {
           "type": "string",
-          "description": "URL of the second dashboard photo for the second fuel tank.",
+          "format": "uri"
+        },
+        "enginePhotoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "trunkPhotoUrl": {
+          "type": "string",
           "format": "uri"
         },
         "frontPhotoUrl": {
           "type": "string",
-          "description": "URL of the front photo of the vehicle.",
           "format": "uri"
         },
         "backPhotoUrl": {
           "type": "string",
-          "description": "URL of the back photo of the vehicle.",
           "format": "uri"
         },
         "leftSidePhotoUrl": {
           "type": "string",
-          "description": "URL of the left side photo of the vehicle.",
           "format": "uri"
         },
         "rightSidePhotoUrl": {
           "type": "string",
-          "description": "URL of the right side photo of the vehicle.",
           "format": "uri"
         }
       },
@@ -148,20 +145,10 @@
         "id",
         "vehicleId",
         "userId",
-        "dateOut",
-        "timeOut",
-        "odometerOut",
-        "fuelLevelOut",
-        "dateIn",
-        "timeIn",
-        "odometerIn",
-        "status",
-        "dashboardPhotoUrl",
-        "dashboardPhotoUrl2",
-        "frontPhotoUrl",
-        "backPhotoUrl",
-        "leftSidePhotoUrl",
-        "rightSidePhotoUrl"
+        "date",
+        "type",
+        "odometer",
+        "checklistType"
       ]
     },
     "ChecklistItem": {
@@ -188,7 +175,7 @@
         },
         "status": {
           "type": "string",
-          "description": "The status of the item (e.g., 'good', 'bad', 'ok', 'missing')."
+          "description": "The status of the item."
         },
         "notes": {
           "type": "string",
@@ -201,6 +188,78 @@
         "itemType",
         "itemName",
         "status"
+      ]
+    },
+    "MaintenanceRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MaintenanceRequest",
+      "type": "object",
+      "description": "Represents a maintenance request for a specific vehicle part or item, generated from a checklist.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MaintenanceRequest entity."
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "The ID of the vehicle this request is for."
+        },
+        "checklistId": {
+          "type": "string",
+          "description": "The ID of the checklist that generated this request."
+        },
+        "itemId": {
+          "type": "string",
+          "description": "The ID of the checklist item that has an issue (e.g., 'farol_esquerdo')."
+        },
+        "itemName": {
+          "type": "string",
+          "description": "The human-readable name of the item (e.g., 'Farol Esquerdo')."
+        },
+        "reportedStatus": {
+          "type": "string",
+          "description": "The status of the item as reported in the checklist (e.g., 'Avariado', 'issue')."
+        },
+        "requestStatus": {
+          "type": "string",
+          "description": "The current status of the maintenance request.",
+          "enum": ["Pendente", "Comprado", "Instalado", "Cancelado"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the request was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The timestamp when the request was last updated.",
+          "format": "date-time"
+        },
+        "driverName": {
+          "type": "string",
+          "description": "The name of the driver who reported the issue."
+        },
+        "vehiclePlate": {
+          "type": "string",
+          "description": "The license plate of the vehicle."
+        },
+        "vehicleModel": {
+          "type": "string",
+          "description": "The model of the vehicle."
+        }
+      },
+      "required": [
+        "id",
+        "vehicleId",
+        "checklistId",
+        "itemId",
+        "itemName",
+        "reportedStatus",
+        "requestStatus",
+        "createdAt",
+        "driverName",
+        "vehiclePlate",
+        "vehicleModel"
       ]
     }
   },
@@ -245,7 +304,7 @@
         }
       },
       {
-        "path": "/vehicles/{vehicleId}/checklists/{checklistsId}",
+        "path": "/checklists/{checklistsId}",
         "definition": {
           "entityName": "Checklist",
           "schema": {
@@ -254,10 +313,6 @@
           "description": "Stores checklists associated with a specific vehicle. Nested under the vehicle to ensure easy retrieval and ownership.",
           "params": [
             {
-              "name": "vehicleId",
-              "description": "The unique identifier for the vehicle."
-            },
-            {
               "name": "checklistsId",
               "description": "The unique identifier for the checklists."
             }
@@ -265,25 +320,17 @@
         }
       },
       {
-        "path": "/vehicles/{vehicleId}/checklists/{checklistsId}/checklistItems/{checklistItemId}",
+        "path": "/maintenanceRequests/{maintenanceRequestId}",
         "definition": {
-          "entityName": "ChecklistItem",
+          "entityName": "MaintenanceRequest",
           "schema": {
-            "$ref": "#/backend/entities/ChecklistItem"
+            "$ref": "#/backend/entities/MaintenanceRequest"
           },
-          "description": "Stores individual checklist items associated with a specific checklist. Nested under the checklist for easy retrieval and data integrity.",
+          "description": "Stores maintenance requests generated from checklists. Admins can manage these requests.",
           "params": [
             {
-              "name": "vehicleId",
-              "description": "The unique identifier for the vehicle."
-            },
-            {
-              "name": "checklistsId",
-              "description": "The unique identifier for the checklists."
-            },
-            {
-              "name": "checklistItemId",
-              "description": "The unique identifier for the checklist item."
+              "name": "maintenanceRequestId",
+              "description": "The unique identifier for the maintenance request."
             }
           ]
         }

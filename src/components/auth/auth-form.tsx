@@ -44,6 +44,7 @@ const signUpSchema = z.object({
   password: z
     .string()
     .min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
+  phoneNumber: z.string().min(10, { message: 'O telefone é obrigatório.'}),
   userType: z.enum(['admin', 'driver'], {
     required_error: 'Selecione um tipo de perfil.',
   }),
@@ -61,7 +62,8 @@ async function createUserProfile(
   firestore: any,
   user: any,
   name: string,
-  userType: 'admin' | 'driver'
+  userType: 'admin' | 'driver',
+  phoneNumber: string
 ) {
   const userRef = doc(firestore, 'users', user.uid);
 
@@ -70,6 +72,7 @@ async function createUserProfile(
     name: name,
     email: user.email,
     userType: userType,
+    phoneNumber: phoneNumber,
   });
 }
 
@@ -88,7 +91,7 @@ export function AuthForm() {
 
   const signUpForm = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { name: '', email: '', password: '', userType: 'driver' },
+    defaultValues: { name: '', email: '', password: '', phoneNumber: '', userType: 'driver' },
   });
 
   const handleAuthError = (error: any) => {
@@ -147,7 +150,7 @@ export function AuthForm() {
       );
       await updateProfile(userCredential.user, { displayName: data.name });
       
-      await createUserProfile(firestore, userCredential.user, data.name, userType);
+      await createUserProfile(firestore, userCredential.user, data.name, userType, data.phoneNumber);
       
       toast({
         title: 'Conta criada com sucesso!',
@@ -268,6 +271,19 @@ export function AuthForm() {
                 />
                 <FormField
                   control={signUpForm.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={signUpForm.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
@@ -328,3 +344,5 @@ export function AuthForm() {
     </Tabs>
   );
 }
+
+    

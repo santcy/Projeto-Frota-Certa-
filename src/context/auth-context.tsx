@@ -11,6 +11,7 @@ interface AppUser {
   uid: string;
   name: string | null;
   email: string | null;
+  phoneNumber: string | null;
   role: UserRole;
   firebaseUser: FirebaseUser;
 }
@@ -31,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [firestore, firebaseUser]
   );
   
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{userType: UserRole, name: string}>(userDocRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{userType: UserRole, name: string, phoneNumber: string}>(userDocRef);
 
   const isUserLoading = isAuthLoading || isProfileLoading;
 
@@ -40,11 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const role = userProfile?.userType || 'driver';
     const name = userProfile?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário';
+    const phoneNumber = userProfile?.phoneNumber || firebaseUser.phoneNumber || null;
 
     return {
       uid: firebaseUser.uid,
       name,
       email: firebaseUser.email,
+      phoneNumber,
       role,
       firebaseUser,
     };
@@ -69,3 +72,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

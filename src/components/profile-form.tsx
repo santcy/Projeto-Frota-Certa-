@@ -130,6 +130,7 @@ const CameraCapture = ({
 const formSchema = z.object({
   name: z.string().min(2, 'O nome é obrigatório.').trim(),
   email: z.string().email(),
+  phoneNumber: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -150,6 +151,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     defaultValues: {
       name: user.name || '',
       email: user.email || '',
+      phoneNumber: user.phoneNumber || '',
     },
   });
 
@@ -157,6 +159,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     form.reset({
       name: user.name || '',
       email: user.email || '',
+      phoneNumber: user.phoneNumber || '',
     });
   }, [user, form]);
   
@@ -199,6 +202,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
       await updateProfile(auth.currentUser, {
         displayName: data.name,
       });
+
+      // Phone number is in Firestore, not Auth, so we don't update it here.
+      // If we wanted to, we'd need a Firestore update function.
 
       toast({
         title: 'Nome Atualizado!',
@@ -279,6 +285,22 @@ export function ProfileForm({ user }: ProfileFormProps) {
             </FormItem>
           )}
         />
+         <FormField
+          control={form.control}
+          name="phoneNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telefone</FormLabel>
+              <FormControl>
+                <Input placeholder="Seu telefone" {...field} disabled />
+              </FormControl>
+               <FormDescription>
+                O telefone não pode ser alterado.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button
           type="submit"
@@ -300,3 +322,5 @@ export function ProfileForm({ user }: ProfileFormProps) {
     </Form>
   );
 }
+
+    
