@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function ChecklistLightPage() {
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Novo Checklist Frota Leve</CardTitle>
