@@ -13,7 +13,7 @@ import React from 'react';
 
 function EditVehicleSkeleton() {
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-4xl">
       <Card>
         <CardHeader>
           <Skeleton className="h-8 w-64" />
@@ -69,7 +69,7 @@ export default function EditVehiclePage({ params }: { params: { id: string } }) 
   }
 
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Editar Veículo: {vehicle.plate}</CardTitle>

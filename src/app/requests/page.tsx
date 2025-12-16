@@ -52,54 +52,65 @@ function StatusBadge({ status }: { status: MaintenanceRequestStatus }) {
 
 function RequestsPageSkeleton() {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Peças e Itens Solicitados</CardTitle>
-                <CardDescription>
-                Itens que requerem atenção com base nos últimos checklists.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Item</TableHead>
-                                <TableHead>Veículo</TableHead>
-                                <TableHead>Data</TableHead>
-                                <TableHead>Motorista</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Ações</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Array.from({ length: 10 }).map((_, i) => (
-                            <TableRow key={i}>
-                                <TableCell>
-                                <Skeleton className="h-5 w-32" />
-                                </TableCell>
-                                <TableCell>
-                                <Skeleton className="h-5 w-24" />
-                                </TableCell>
-                                <TableCell>
-                                <Skeleton className="h-5 w-28" />
-                                </TableCell>
-                                <TableCell>
-                                <Skeleton className="h-5 w-28" />
-                                </TableCell>
-                                <TableCell>
-                                <Skeleton className="h-6 w-20" />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                <Skeleton className="h-8 w-8 ml-auto" />
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                Solicitações de Manutenção
+                </h1>
+                <p className="text-muted-foreground">
+                Gerencie todos os itens reportados com avaria ou problema nos
+                checklists.
+                </p>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Peças e Itens Solicitados</CardTitle>
+                    <CardDescription>
+                    Itens que requerem atenção com base nos últimos checklists.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Item</TableHead>
+                                    <TableHead>Veículo</TableHead>
+                                    <TableHead>Data</TableHead>
+                                    <TableHead>Motorista</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 10 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell>
+                                    <Skeleton className="h-5 w-32" />
+                                    </TableCell>
+                                    <TableCell>
+                                    <Skeleton className="h-5 w-24" />
+                                    </TableCell>
+                                    <TableCell>
+                                    <Skeleton className="h-5 w-28" />
+                                    </TableCell>
+                                    <TableCell>
+                                    <Skeleton className="h-5 w-28" />
+                                    </TableCell>
+                                    <TableCell>
+                                    <Skeleton className="h-6 w-20" />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                    <Skeleton className="h-8 w-8 ml-auto" />
+                                    </TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 }
 
@@ -136,23 +147,14 @@ export default function RequestedPartsPage() {
 
   if (isLoading) {
     return (
-         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                Solicitações de Manutenção
-                </h1>
-                <p className="text-muted-foreground">
-                Gerencie todos os itens reportados com avaria ou problema nos
-                checklists.
-                </p>
-            </div>
+         <div className="mx-auto w-full max-w-7xl">
             <RequestsPageSkeleton />
         </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Solicitações de Manutenção

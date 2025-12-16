@@ -108,7 +108,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8">
+    <div className="mx-auto w-full max-w-7xl flex flex-col gap-6 md:gap-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="Total de Veículos"

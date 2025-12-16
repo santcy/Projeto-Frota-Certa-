@@ -65,7 +65,7 @@ function getItemStatusIcon(status: LightVehicleChecklistItemStatus | 'ok' | 'iss
 
 function VehicleDetailsSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
         <div className="space-y-1">
           <Skeleton className="h-8 w-72" />
@@ -234,7 +234,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className='space-y-1'>
           <h1 className="text-2xl font-bold tracking-tight">

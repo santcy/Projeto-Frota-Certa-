@@ -152,7 +152,7 @@ export default function VehiclesPage() {
   const isLoading = isLoadingVehicles || isLoadingChecklists;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto w-full max-w-7xl flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Frota de Veículos</h1>
         <Button asChild className='w-full sm:w-auto'>

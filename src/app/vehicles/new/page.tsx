@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function NewVehiclePage() {
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Cadastrar Novo Veículo</CardTitle>

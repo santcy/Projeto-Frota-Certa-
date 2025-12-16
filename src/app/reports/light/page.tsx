@@ -155,7 +155,7 @@ export default function ReportsLightPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Histórico de Checklist (Frota Leve)
