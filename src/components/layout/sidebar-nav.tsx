@@ -82,7 +82,7 @@ export function SidebarNav() {
           <SidebarMenuItem>
             <Collapsible>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton isSubmenuOpen={isReportsActive} isActive={isReportsActive} tooltip={{ children: 'Relatórios' }}>
+                <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Relatórios' }}>
                   <Archive />
                   <span>Relatórios</span>
                 </SidebarMenuButton>
