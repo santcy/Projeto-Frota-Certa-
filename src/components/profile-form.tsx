@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile } from 'firebase/auth';
 
@@ -19,24 +19,121 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Edit } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Check, Edit, Camera, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
-import { Label } from './ui/label';
 import type { AppUser } from '@/context/auth-context';
 import { useAuth as useFirebaseAuth } from '@/firebase';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const CameraCapture = ({
+  onCapture,
+  trigger,
+}: {
+  onCapture: (dataUrl: string) => void;
+  trigger: React.ReactNode;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const { toast } = useToast();
+
+  const handleOpen = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' }, // Use a câmera frontal
+      });
+      setStream(mediaStream);
+      setHasCameraPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Acesso à Câmera Negado',
+        description: 'Por favor, habilite o acesso à câmera nas configurações do seu navegador.',
+      });
+    }
+  };
+
+  const handleClose = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+  };
+
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        onCapture(dataUrl);
+        handleClose();
+      }
+    }
+  };
+
+  return (
+    <Dialog onOpenChange={(open) => (open ? handleOpen() : handleClose())}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-md w-full">
+        <DialogHeader>
+          <DialogTitle>Tirar Foto de Perfil</DialogTitle>
+        </DialogHeader>
+        <div className="relative">
+          {hasCameraPermission === false && (
+             <Alert variant="destructive">
+                <AlertTitle>Acesso à Câmera Necessário</AlertTitle>
+                <AlertDescription>
+                  Você precisa permitir o acesso à câmera para continuar.
+                </AlertDescription>
+              </Alert>
+          )}
+           <video
+            ref={videoRef}
+            className="w-full aspect-square rounded-full object-cover bg-muted"
+            autoPlay
+            playsInline
+            muted
+          />
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+        <DialogClose asChild>
+          <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+            <Camera className="mr-2 h-4 w-4" />
+            Capturar Foto
+          </Button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 
 const formSchema = z.object({
   name: z.string().min(2, 'O nome é obrigatório.').trim(),
   email: z.string().email(),
-  photoURL: z.string().url('Selecione uma imagem válida.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const avatarImages = PlaceHolderImages.filter(img => img.imageHint.includes('avatar'));
 
 interface ProfileFormProps {
   user: AppUser;
@@ -53,7 +150,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
     defaultValues: {
       name: user.name || '',
       email: user.email || '',
-      photoURL: user.firebaseUser.photoURL || avatarImages[0]?.imageUrl || '',
     },
   });
 
@@ -61,9 +157,31 @@ export function ProfileForm({ user }: ProfileFormProps) {
     form.reset({
       name: user.name || '',
       email: user.email || '',
-      photoURL: user.firebaseUser.photoURL || avatarImages[0]?.imageUrl || '',
     });
   }, [user, form]);
+  
+  const handlePhotoUpdate = async (photoDataUrl: string) => {
+    if (!auth.currentUser) return;
+    setIsSubmitting(true);
+    try {
+        await updateProfile(auth.currentUser, {
+            photoURL: photoDataUrl,
+        });
+        toast({
+            title: 'Foto de Perfil Atualizada!',
+            action: <Check className="h-5 w-5 text-green-500" />,
+        });
+        router.refresh();
+    } catch (error: any) {
+         toast({
+            variant: 'destructive',
+            title: 'Erro ao atualizar foto',
+            description: error.message,
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
 
   async function onSubmit(data: FormValues) {
     if (!auth.currentUser) {
@@ -80,16 +198,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
     try {
       await updateProfile(auth.currentUser, {
         displayName: data.name,
-        photoURL: data.photoURL,
       });
 
       toast({
-        title: 'Perfil Atualizado!',
+        title: 'Nome Atualizado!',
         description: `Suas informações foram salvas com sucesso.`,
         action: <Check className="h-5 w-5 text-green-500" />,
       });
       
-      // We might need to refresh the auth context state. A page reload is the simplest way.
       router.refresh();
 
     } catch (error: any) {
@@ -106,6 +222,34 @@ export function ProfileForm({ user }: ProfileFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className='flex flex-col items-center gap-4'>
+            <div className="relative h-32 w-32">
+                <Image
+                    src={user.firebaseUser.photoURL || `https://avatar.vercel.sh/${user.email}.png`}
+                    alt="Foto de perfil"
+                    width={128}
+                    height={128}
+                    className="aspect-square w-full rounded-full object-cover border-2 border-primary"
+                />
+                 <CameraCapture
+                    onCapture={handlePhotoUpdate}
+                    trigger={
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="absolute bottom-0 right-0 rounded-full"
+                        >
+                            <Camera className="h-4 w-4" />
+                            <span className="sr-only">Alterar foto</span>
+                        </Button>
+                    }
+                />
+            </div>
+             <FormDescription>
+                Clique na câmera para tirar uma nova foto.
+            </FormDescription>
+        </div>
         <FormField
           control={form.control}
           name="name"
@@ -135,50 +279,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="photoURL"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Foto de Perfil</FormLabel>
-              <FormDescription>
-                Selecione um avatar.
-              </FormDescription>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"
-                >
-                  {avatarImages.map((image) => (
-                    <FormItem key={image.id} className="space-y-0">
-                      <FormControl>
-                        <div>
-                          <RadioGroupItem value={image.imageUrl} id={image.id} className="peer sr-only" />
-                          <Label
-                            htmlFor={image.id}
-                            className="block cursor-pointer rounded-full border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                          >
-                            <Image
-                              src={image.imageUrl}
-                              alt={image.description}
-                              width={128}
-                              height={128}
-                              className="aspect-square w-full object-cover rounded-full"
-                              data-ai-hint={image.imageHint}
-                            />
-                          </Label>
-                        </div>
-                      </FormControl>
-                    </FormItem>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
 
         <Button
           type="submit"
