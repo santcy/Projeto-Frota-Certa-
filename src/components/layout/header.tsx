@@ -17,6 +17,7 @@ import { useAuth as useFirebaseAuth } from '@/firebase'; // Firebase auth instan
 import { Skeleton } from '@/components/ui/skeleton';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export function Header() {
   const { user, isUserLoading } = useAuth();
@@ -73,9 +74,11 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>Perfil</span>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
