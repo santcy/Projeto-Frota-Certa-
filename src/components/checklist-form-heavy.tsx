@@ -294,6 +294,7 @@ export function ChecklistFormHeavy() {
                 itemName: allItemsMap.get(itemId) || 'Item desconhecido',
                 reportedStatus: status,
                 requestStatus: 'Pendente',
+                quantity: 1,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 driverName: data.driverName,

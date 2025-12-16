@@ -178,6 +178,7 @@ export default function RequestedPartsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Item</TableHead>
+                  <TableHead>Qtd.</TableHead>
                   <TableHead>Veículo</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Motorista</TableHead>
@@ -190,6 +191,7 @@ export default function RequestedPartsPage() {
                   requests.map((req) => (
                     <TableRow key={req.id}>
                       <TableCell className="font-medium">{req.itemName}</TableCell>
+                      <TableCell>{req.quantity}</TableCell>
                       <TableCell>
                         {req.vehiclePlate} - {req.vehicleModel}
                       </TableCell>
@@ -227,7 +229,7 @@ export default function RequestedPartsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhum item com problema encontrado nos checklists.
                     </TableCell>
                   </TableRow>

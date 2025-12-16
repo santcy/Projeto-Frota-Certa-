@@ -303,6 +303,7 @@ export function ChecklistForm() {
                 itemName: allItemsMap.get(itemId) || 'Item desconhecido',
                 reportedStatus: String(status),
                 requestStatus: 'Pendente',
+                quantity: 1,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 driverName: data.driverName,

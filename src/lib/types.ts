@@ -64,6 +64,7 @@ export interface MaintenanceRequest {
   itemName: string; // e.g., 'Farol Esquerdo'
   reportedStatus: string; // e.g., 'issue', 'Avariado'
   requestStatus: MaintenanceRequestStatus;
+  quantity: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   driverName: string;
