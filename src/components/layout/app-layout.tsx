@@ -10,24 +10,30 @@ function AppLayoutSkeleton() {
   return (
     <div className="flex min-h-screen">
       <div className="hidden md:block border-r bg-sidebar" style={{ width: '16rem' }}>
-        <div className="flex h-full flex-col p-2 gap-2">
+        <div className="flex h-full flex-col">
             <div className="flex items-center gap-3 p-2 h-16 border-b">
                 <Skeleton className="h-8 w-8" />
                 <Skeleton className="h-6 w-24" />
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
             </div>
+             <div className="my-2 border-t border-sidebar-border"></div>
+            <div className="p-2">
+                <div className='flex flex-col gap-2 items-center text-center'>
+                     <Skeleton className="h-4 w-3/4" />
+                </div>
+            </div>
         </div>
       </div>
       <div className="flex flex-1 flex-col">
-        <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
            <Skeleton className="h-7 w-7 md:hidden" />
             <Skeleton className="h-10 w-10 rounded-full ml-auto" />
-        </div>
+        </header>
         <main className="flex-1 p-4 md:p-6">
             <Skeleton className="h-full w-full" />
         </main>
