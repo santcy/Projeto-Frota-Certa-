@@ -170,7 +170,7 @@ const CameraCapture = ({
   return (
     <Dialog onOpenChange={(open) => (open ? handleOpen() : handleClose())}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl w-full">
         <DialogHeader>
           <DialogTitle>Tirar Foto</DialogTitle>
         </DialogHeader>
@@ -360,7 +360,7 @@ export function ChecklistForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           <FormField
             control={form.control}
             name="driverName"
@@ -443,7 +443,7 @@ export function ChecklistForm() {
 
         <div className="space-y-6">
           <h3 className="text-lg font-medium">Fotos Obrigatórias</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {photoFields.map(({ key, label }) => (
               <FormField
                 key={key}

@@ -66,17 +66,17 @@ function getItemStatusIcon(status: LightVehicleChecklistItemStatus | 'ok' | 'iss
 function VehicleDetailsSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+        <div className="space-y-1">
           <Skeleton className="h-8 w-72" />
-          <Skeleton className="mt-2 h-5 w-48" />
+          <Skeleton className="h-5 w-48" />
         </div>
-        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-10 w-full sm:w-32" />
       </div>
       <Card>
         <CardHeader>
           <Skeleton className="h-7 w-56" />
-          <Skeleton className="mt-1 h-4 w-full" />
+          <Skeleton className="mt-1 h-4 w-full max-w-sm" />
         </CardHeader>
         <CardContent className="space-y-2">
             {Array.from({length: 3}).map((_, i) => (
@@ -235,14 +235,14 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className="space-y-6">
-       <div className="flex items-center justify-between">
-        <div>
+       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className='space-y-1'>
           <h1 className="text-2xl font-bold tracking-tight">
             Detalhes do Veículo: {vehicle.plate}
           </h1>
           <p className="text-muted-foreground">{vehicle.model}</p>
         </div>
-        <Button asChild>
+        <Button asChild className='w-full sm:w-auto'>
           <Link href={`/vehicles/${vehicle.id}/edit`}>
             <Edit className="mr-2 h-4 w-4" />
             Editar Veículo
@@ -263,8 +263,8 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
               {vehicleChecklists.map((checklist) => (
                 <AccordionItem value={checklist.id} key={checklist.id}>
                   <AccordionTrigger>
-                    <div className="flex w-full items-center justify-between pr-4">
-                      <div className="flex items-center gap-4">
+                    <div className="flex w-full items-center justify-between pr-4 gap-4">
+                      <div className="flex items-center gap-2 sm:gap-4">
                         <Badge
                           variant={
                             checklist.type === 'Saída' ? 'outline' : 'default'
@@ -273,7 +273,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                           {checklist.type}
                         </Badge>
                         <div className="text-left">
-                          <p className="font-medium">
+                          <p className="font-medium text-sm sm:text-base">
                             {checklist.date
                               .toDate()
                               .toLocaleDateString('pt-BR', {
@@ -282,7 +282,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
                                 year: 'numeric',
                               })}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             por {checklist.driverName}
                           </p>
                         </div>
@@ -302,7 +302,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
 
                       <div>
                         <h4 className="mb-4 font-semibold text-lg">Itens Verificados</h4>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                           {Object.entries(CHECKLIST_ITEMS_SECTIONS_LEVE).map(
                             ([sectionKey, sectionName]) => {
                               const sectionItems =
@@ -342,7 +342,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
 
                       <div>
                         <h4 className="mb-4 font-semibold text-lg">Fotos</h4>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {photoFields.map(({ key, label }) => {
                                 const photoUrl = checklist[key] as string | undefined;
                                 return photoUrl ? (

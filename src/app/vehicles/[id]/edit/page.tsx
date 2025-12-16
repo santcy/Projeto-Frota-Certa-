@@ -17,9 +17,9 @@ function EditVehicleSkeleton() {
       <Card>
         <CardHeader>
           <Skeleton className="h-8 w-64" />
-          <Skeleton className="mt-2 h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-full max-w-md" />
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-8 pt-6">
             <div className="space-y-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-10 w-full" />

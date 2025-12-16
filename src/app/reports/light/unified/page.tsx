@@ -165,7 +165,7 @@ export default function UnifiedReportLightPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 className="text-2xl font-bold tracking-tight">
             Relatório Unificado de Problemas (Frota Leve)
@@ -175,7 +175,7 @@ export default function UnifiedReportLightPage() {
             </p>
         </div>
         {!isLoading && Object.keys(reportData).length > 0 && (
-            <Button onClick={handleDownload}>
+            <Button onClick={handleDownload} className='w-full sm:w-auto'>
                 <Download className="mr-2 h-4 w-4" />
                 Baixar Relatório
             </Button>

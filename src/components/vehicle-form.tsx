@@ -188,7 +188,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
                 >
                   {vehicleImages.map((image) => (
                     <FormItem key={image.id} className="space-y-0">
