@@ -7,7 +7,7 @@ import { useFirebase } from '@/firebase';
 
 export type UserRole = 'admin' | 'driver';
 
-interface AppUser {
+export interface AppUser {
   uid: string;
   name: string | null;
   email: string | null;
@@ -24,9 +24,33 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { user: firebaseUser, isUserLoading: isAuthLoading } = useUser();
+  const { firestore } = useFirebase();
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && firebaseUser ? doc(firestore, 'users', firebaseUser.uid) : null),
+    [firestore, firebaseUser]
+  );
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ userType: UserRole, name: string, email: string, phoneNumber: string }>(userDocRef);
+
+  const user = useMemo<AppUser | null>(() => {
+    if (!firebaseUser || !userProfile) return null;
+
+    return {
+      uid: firebaseUser.uid,
+      name: userProfile.name || firebaseUser.displayName,
+      email: userProfile.email || firebaseUser.email,
+      phoneNumber: userProfile.phoneNumber,
+      role: userProfile.userType,
+      firebaseUser,
+    };
+  }, [firebaseUser, userProfile]);
+
+  const isUserLoading = isAuthLoading || isProfileLoading;
+
   const value = {
-    user: null,
-    isUserLoading: false,
+    user,
+    isUserLoading,
   };
 
   return (

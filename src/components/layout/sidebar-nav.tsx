@@ -4,12 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   ClipboardCheck,
-  FileText,
   LayoutDashboard,
   Truck,
   Wrench,
   Archive,
-  ClipboardList,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -25,12 +23,106 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useAuth } from '@/context/auth-context';
+import { Skeleton } from '../ui/skeleton';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { open } = useSidebar();
+  const { user, isUserLoading } = useAuth();
   
   const isReportsActive = pathname.startsWith('/reports');
+  const isAdmin = user?.role === 'admin';
+
+  const renderMenuItems = () => {
+    if (isUserLoading) {
+        return (
+            <div className="space-y-2 px-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+            </div>
+        )
+    }
+
+    if (isAdmin) {
+        return (
+             <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
+                    <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/vehicles')} tooltip={{ children: 'Veículos' }}>
+                    <Link href="/vehicles"><Truck /><span>Veículos</span></Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/light')} tooltip={{ children: 'Checklist Leve' }}>
+                    <Link href="/checklist/light"><ClipboardCheck /><span>Checklist Leve</span></Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/heavy')} tooltip={{ children: 'Checklist Pesado' }}>
+                    <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <Collapsible>
+                    <CollapsibleTrigger asChild>
+                        <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
+                        <Archive />
+                        <span>Histórico</span>
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
+                                    <Link href="/reports/light">Histórico Leve</Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
+                                    <Link href="/reports/heavy">Histórico Pesado</Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
+                                    <Link href="/reports/light/unified">Unificado Leve</Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
+                                    <Link href="/reports/heavy/unified">Unificado Pesado</Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                    </Collapsible>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        );
+    }
+
+    // Driver view
+    return (
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/light')} tooltip={{ children: 'Checklist Leve' }}>
+                <Link href="/checklist/light"><ClipboardCheck /><span>Checklist Leve</span></Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/heavy')} tooltip={{ children: 'Checklist Pesado' }}>
+                <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    )
+  }
 
   return (
     <>
@@ -50,63 +142,7 @@ export function SidebarNav() {
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
-              <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/vehicles')} tooltip={{ children: 'Veículos' }}>
-              <Link href="/vehicles"><Truck /><span>Veículos</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/light')} tooltip={{ children: 'Checklist Leve' }}>
-              <Link href="/checklist/light"><ClipboardCheck /><span>Checklist Leve</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/heavy')} tooltip={{ children: 'Checklist Pesado' }}>
-              <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
-                  <Archive />
-                  <span>Histórico</span>
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                 <SidebarMenuSub>
-                    <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
-                            <Link href="/reports/light">Histórico Leve</Link>
-                        </SidebarMenuSubButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
-                            <Link href="/reports/heavy">Histórico Pesado</Link>
-                        </SidebarMenuSubButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
-                            <Link href="/reports/light/unified">Unificado Leve</Link>
-                        </SidebarMenuSubButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
-                            <Link href="/reports/heavy/unified">Unificado Pesado</Link>
-                        </SidebarMenuSubButton>
-                    </SidebarMenuItem>
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarMenuItem>
-
-        </SidebarMenu>
+        {renderMenuItems()}
       </SidebarContent>
       <Separator className="my-2 bg-sidebar-border" />
       <SidebarFooter className="p-2">
