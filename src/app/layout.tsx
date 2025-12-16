@@ -1,30 +1,35 @@
+'use client';
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
-import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
-import { Header } from '@/components/layout/header';
-import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import { AuthProvider } from '@/context/auth-context';
-import { AuthGuard } from '@/components/auth/auth-guard';
-
-export const metadata: Metadata = {
-  title: 'Rota Certa - Gerenciamento de Frotas',
-  description:
-    'Gerencie as manutenções e checklists da sua frota de forma eficiente.',
-};
+import { AppLayout } from '@/components/layout/app-layout';
+import { usePathname } from 'next/navigation';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        <title>Rota Certa - Gerenciamento de Frotas</title>
+        <meta
+          name="description"
+          content="Gerencie as manutenções e checklists da sua frota de forma eficiente."
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
@@ -33,21 +38,13 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
           <AuthProvider>
-            <AuthGuard>
-              <SidebarProvider>
-                <div className="flex min-h-screen">
-                  <Sidebar>
-                    <SidebarNav />
-                  </Sidebar>
-                  <div className="flex flex-1 flex-col">
-                    <Header />
-                    <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
-                      {children}
-                    </main>
-                  </div>
-                </div>
-              </SidebarProvider>
-            </AuthGuard>
+            {isLoginPage ? (
+              children
+            ) : (
+              <AppLayout>
+                {children}
+              </AppLayout>
+            )}
           </AuthProvider>
         </FirebaseClientProvider>
         <Toaster />
