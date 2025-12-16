@@ -54,6 +54,25 @@ export interface Checklist {
   rightSidePhotoUrl?: string;
 }
 
+export type MaintenanceRequestStatus = 'Pendente' | 'Comprado' | 'Instalado' | 'Cancelado';
+
+export interface MaintenanceRequest {
+    id: string;
+    vehicleId: string;
+    checklistId: string;
+    itemId: string;
+    itemName: string;
+    reportedStatus: string;
+    requestStatus: MaintenanceRequestStatus;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    driverName: string;
+    vehiclePlate: string;
+    vehicleModel: string;
+    quantity: number;
+}
+
+
 // Heavy Fleet Checklist (Original)
 export const CHECKLIST_ITEMS_SECTIONS = {
   iluminacao: 'Iluminação',
@@ -201,3 +220,5 @@ export const CHECKLIST_ITEMS_LEVE: Record<
     { id: 'chaves_leve', label: 'Chaves', statuses: lightFleetStatuses },
   ],
 };
+
+    

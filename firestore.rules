@@ -1,12 +1,49 @@
 /**
- * WARNING: These rules are completely insecure and allow public access.
- * This is for development or specific use cases only.
+ * WARNING: These rules are not production-ready and have been simplified for development.
+ * You should secure your database before deploying to a production environment.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuth() && getUserData().userType == 'admin';
+    }
+
+    // Rules for collections
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow write: if isOwner(userId);
+    }
+    
+    match /vehicles/{vehicleId} {
+      allow read, write: if isAuth();
+    }
+
+    match /checklists/{checklistId} {
+      allow read, write: if isAuth();
+    }
+
+    match /maintenanceRequests/{requestId} {
+      allow read, write: if isAdmin();
+    }
+
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false; // Default deny
     }
   }
 }
+    

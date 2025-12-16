@@ -152,6 +152,19 @@ export default function RequestedPartsPage() {
         </div>
     );
   }
+  
+  if (user?.role !== 'admin') {
+      return (
+        <div className="mx-auto w-full max-w-7xl">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Acesso Negado</CardTitle>
+                    <CardDescription>Você não tem permissão para acessar esta página.</CardDescription>
+                </CardHeader>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
@@ -242,3 +255,5 @@ export default function RequestedPartsPage() {
     </div>
   );
 }
+
+    

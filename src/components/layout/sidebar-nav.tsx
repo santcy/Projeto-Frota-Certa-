@@ -69,6 +69,11 @@ export function SidebarNav() {
                     <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Solicitações de Manutenção' }}>
+                    <Link href="/requests"><Wrench /><span>Solicitações</span></Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <Collapsible>
                     <CollapsibleTrigger asChild>
@@ -128,7 +133,7 @@ export function SidebarNav() {
     <>
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-3">
-          <Wrench className="h-8 w-8 text-primary" />
+          <Truck className="h-8 w-8 text-primary" />
           <div
             className={cn(
               'transition-opacity duration-200 whitespace-nowrap',
