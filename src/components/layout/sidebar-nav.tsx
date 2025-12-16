@@ -73,17 +73,26 @@ export function SidebarNav() {
               <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-
           <SidebarMenuItem>
             <Collapsible>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Relatórios' }}>
+                <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
                   <Archive />
-                  <span>Relatórios</span>
+                  <span>Histórico</span>
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
                  <SidebarMenuSub>
+                    <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
+                            <Link href="/reports/light">Histórico Leve</Link>
+                        </SidebarMenuSubButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
+                            <Link href="/reports/heavy">Histórico Pesado</Link>
+                        </SidebarMenuSubButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
                             <Link href="/reports/light/unified">Unificado Leve</Link>
