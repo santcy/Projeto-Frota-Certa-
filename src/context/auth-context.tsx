@@ -24,38 +24,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user: firebaseUser, isUserLoading: isAuthLoading } = useUser();
-  const { firestore } = useFirebase();
-
-  const userDocRef = useMemoFirebase(
-    () => (firestore && firebaseUser ? doc(firestore, 'users', firebaseUser.uid) : null),
-    [firestore, firebaseUser]
-  );
-  
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{userType: UserRole, name: string, phoneNumber: string}>(userDocRef);
-
-  const isUserLoading = isAuthLoading || isProfileLoading;
-
-  const appUser: AppUser | null = useMemo(() => {
-    if (!firebaseUser) return null;
-    
-    const role = userProfile?.userType || 'driver';
-    const name = userProfile?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário';
-    const phoneNumber = userProfile?.phoneNumber || firebaseUser.phoneNumber || null;
-
-    return {
-      uid: firebaseUser.uid,
-      name,
-      email: firebaseUser.email,
-      phoneNumber,
-      role,
-      firebaseUser,
-    };
-  }, [firebaseUser, userProfile]);
-
   const value = {
-    user: appUser,
-    isUserLoading,
+    user: null,
+    isUserLoading: false,
   };
 
   return (
@@ -72,5 +43,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    

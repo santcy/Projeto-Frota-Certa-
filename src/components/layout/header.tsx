@@ -25,7 +25,11 @@ export function Header() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch(e) {
+      // ignore
+    }
     router.push('/login');
   };
 
@@ -50,12 +54,12 @@ export function Header() {
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
               <AvatarImage
-                src={user?.firebaseUser.photoURL || `https://avatar.vercel.sh/${user?.email}.png`}
+                src={user?.firebaseUser.photoURL || `https://avatar.vercel.sh/guest.png`}
                 alt={user?.name || 'Usuário'}
                 data-ai-hint="person portrait"
               />
               <AvatarFallback>
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                {'U'}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -87,9 +91,12 @@ export function Header() {
               </DropdownMenuItem>
             </>
           ) : (
-             <DropdownMenuLabel className="font-normal">
-                <p className="text-sm">Não autenticado</p>
-              </DropdownMenuLabel>
+             <DropdownMenuItem asChild>
+                <Link href="/login">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Login</span>
+                </Link>
+             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

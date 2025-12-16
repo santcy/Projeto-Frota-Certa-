@@ -20,7 +20,6 @@ import {
   useMemoFirebase,
   WithId,
 } from '@/firebase';
-import { useAuth } from '@/context/auth-context';
 import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -63,31 +62,21 @@ function DashboardCard({
 
 export default function Dashboard() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'vehicles') : null),
-    [firestore, user]
+    () => (firestore ? collection(firestore, 'vehicles') : null),
+    [firestore]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    
-    // Both admins and drivers fetch all checklists ordered by date
-    // Filtering for drivers will be done on the client-side
+    if (!firestore) return null;
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
-      
-  }, [firestore, user]);
+  }, [firestore]);
 
-  const { data: allRecentChecklists, isLoading: isLoadingChecklists } =
+  const { data: recentChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
-
-  // Client-side filtering
-  const recentChecklists = user?.role === 'admin' 
-    ? allRecentChecklists 
-    : allRecentChecklists?.filter(c => c.userId === user.uid).slice(0, 5);
 
 
   const vehiclesWithProblems =
