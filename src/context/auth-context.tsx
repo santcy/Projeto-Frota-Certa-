@@ -28,8 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { firestore } = useFirebase();
 
   const userDocRef = useMemoFirebase(
-    () => (firestore && firebaseUser ? doc(firestore, 'users', firebaseUser.uid) : null),
-    [firestore, firebaseUser]
+    () => (firestore && firebaseUser?.uid ? doc(firestore, 'users', firebaseUser.uid) : null),
+    [firestore, firebaseUser?.uid]
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ userType: UserRole, name: string, email: string, phoneNumber: string }>(userDocRef);
 
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [firebaseUser, userProfile]);
 
-  const isUserLoading = isAuthLoading || isProfileLoading;
+  const isUserLoading = isAuthLoading || (!!firebaseUser && isProfileLoading);
 
   const value = {
     user,

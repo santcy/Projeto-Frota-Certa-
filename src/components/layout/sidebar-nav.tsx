@@ -32,7 +32,6 @@ export function SidebarNav() {
   const { user, isUserLoading } = useAuth();
   
   const isReportsActive = pathname.startsWith('/reports');
-  const isAdmin = user?.role === 'admin';
 
   const renderMenuItems = () => {
     if (isUserLoading) {
@@ -46,7 +45,7 @@ export function SidebarNav() {
         )
     }
 
-    if (isAdmin) {
+    if (user?.role === 'admin') {
         return (
              <SidebarMenu>
                 <SidebarMenuItem>
