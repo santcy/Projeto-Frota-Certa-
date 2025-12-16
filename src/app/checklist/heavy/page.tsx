@@ -1,20 +1,15 @@
 import { ChecklistFormHeavy } from '@/components/checklist-form-heavy';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ChecklistHeavyPage() {
   return (
-    <div className="w-full">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Novo Checklist de Veículo Pesado</CardTitle>
-          <CardDescription>
+    <div className="w-full space-y-6">
+       <div>
+        <h1 className="text-2xl font-bold tracking-tight">Novo Checklist de Veículo Pesado</h1>
+        <p className="text-muted-foreground">
             Preencha todos os campos para registrar a vistoria do veículo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChecklistFormHeavy />
-        </CardContent>
-      </Card>
+        </p>
+      </div>
+      <ChecklistFormHeavy />
     </div>
   );
 }
