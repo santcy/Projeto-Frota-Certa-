@@ -29,22 +29,11 @@ import { Skeleton } from '../ui/skeleton';
 export function SidebarNav() {
   const pathname = usePathname();
   const { open } = useSidebar();
-  const { user, isUserLoading } = useAuth();
+  const { user } = useAuth();
   
   const isReportsActive = pathname.startsWith('/reports');
 
   const renderMenuItems = () => {
-    if (isUserLoading) {
-        return (
-            <div className="space-y-2 px-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-            </div>
-        )
-    }
-
     if (user?.role === 'admin') {
         return (
              <SidebarMenu>

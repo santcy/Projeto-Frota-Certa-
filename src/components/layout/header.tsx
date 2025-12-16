@@ -20,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export function Header() {
-  const { user, isUserLoading } = useAuth();
+  const { user } = useAuth();
   const auth = useFirebaseAuth();
   const router = useRouter();
 
@@ -32,17 +32,6 @@ export function Header() {
     }
     router.push('/login');
   };
-
-  if (isUserLoading) {
-    return (
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="md:hidden" />
-        </div>
-        <Skeleton className="h-10 w-10 rounded-full" />
-      </header>
-    );
-  }
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
@@ -59,7 +48,7 @@ export function Header() {
                 data-ai-hint="person portrait"
               />
               <AvatarFallback>
-                {'U'}
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
           </Button>
