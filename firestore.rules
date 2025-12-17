@@ -1,12 +1,27 @@
-/**
- * WARNING: These rules are not production-ready and have been simplified for development.
- * You should secure your database before deploying to a production environment.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
+
+    // Allow authenticated users to manage their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Admins can manage all vehicles, authenticated users can read
+    match /vehicles/{vehicleId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // Simplified for now, should be admin only
+    }
+
+    // Authenticated users can list checklists for reports
+    // Write access is also open for authenticated users for now
+    match /checklists/{checklistId} {
       allow read, write: if request.auth != null;
+    }
+
+    // Admins can manage all maintenance requests
+    match /maintenanceRequests/{requestId} {
+      allow read, write: if request.auth != null; // Simplified for now, should be admin only
     }
   }
 }
