@@ -2,48 +2,11 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is an admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
-    }
-
-    // Users can read/write their own profile. Admins can read any profile.
-    match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Admins can manage all vehicles. Authenticated users can read vehicle list and details.
-    match /vehicles/{vehicleId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
-    }
-
-    // Rules for the checklists collection
-    match /checklists/{checklistId} {
-      // Allow a user to get their own documents OR if the user is an admin
-      allow get: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
-
-      // Allow a user to create a checklist for themselves
-      // The user ID in the new document must match the authenticated user's ID.
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.userId;
-
-      // Admins can update/delete any checklist. Users cannot update/delete.
-      allow update, delete: if request.auth != null && isAdmin();
-      
-      // Explicitly deny list for non-admins to force filtered queries
-      allow list: if request.auth != null && isAdmin();
-    }
-
-    // Admins can manage all maintenance requests.
-    // Drivers can create them (via checklist submission), but not read/update/delete directly.
-    match /maintenanceRequests/{requestId} {
-      allow read, write: if request.auth != null && isAdmin();
-      // Allow create for any authenticated user, as it's part of a batch write
-      // initiated by a checklist, which is already secured.
-      allow create: if request.auth != null;
+    // Allow read/write access to all documents for any authenticated user.
+    // This is insecure and should only be used for local development or in
+    // specific scenarios where data is public.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
