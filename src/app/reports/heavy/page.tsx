@@ -32,10 +32,9 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 export default function ReportsHeavyPage() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
 
     const queryConstraints: QueryConstraint[] = [
         where('checklistType', '==', 'pesada'),
@@ -43,14 +42,14 @@ export default function ReportsHeavyPage() {
     ];
     
     return query(collection(firestore, 'checklists'), ...queryConstraints);
-  }, [firestore, user]);
+  }, [firestore]);
 
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'vehicles') : null),
-    [firestore, user]
+    () => (firestore ? collection(firestore, 'vehicles') : null),
+    [firestore]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);

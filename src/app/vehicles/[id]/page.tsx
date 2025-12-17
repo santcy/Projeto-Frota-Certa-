@@ -95,14 +95,14 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   const router = useRouter();
 
   const vehicleRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'vehicles', id) : null),
-    [firestore, user, id]
+    () => (firestore ? doc(firestore, 'vehicles', id) : null),
+    [firestore, id]
   );
   const { data: vehicle, isLoading: isLoadingVehicle } =
     useDoc<Vehicle>(vehicleRef);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) {
+    if (!firestore) {
       return null;
     }
 
@@ -112,7 +112,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     ];
 
     return query(collection(firestore, 'checklists'), ...queryConstraints);
-  }, [firestore, user, id]);
+  }, [firestore, id]);
   
   const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);

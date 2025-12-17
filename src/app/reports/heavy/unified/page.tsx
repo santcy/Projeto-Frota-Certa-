@@ -44,23 +44,22 @@ type UnifiedReportData = {
 
 export default function UnifiedReportHeavyPage() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
 
     const baseQuery = collection(firestore, 'checklists');
     const queryConstraints = [where('checklistType', '==', 'pesada')];
     
     return query(baseQuery, ...queryConstraints);
-  }, [firestore, user]);
+  }, [firestore]);
 
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'vehicles') : null),
-    [firestore, user]
+    () => (firestore ? collection(firestore, 'vehicles') : null),
+    [firestore]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);

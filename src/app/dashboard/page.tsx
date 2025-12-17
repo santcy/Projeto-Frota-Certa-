@@ -88,7 +88,6 @@ function getProblemDescription(checklist: WithId<Checklist>): string | string[] 
 
 export default function Dashboard() {
   const { firestore } = useFirebase();
-  const { user, isUserLoading } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'vehicles') : null),
@@ -98,9 +97,9 @@ export default function Dashboard() {
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
-  }, [firestore, user]);
+  }, [firestore]);
 
   const { data: recentChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
