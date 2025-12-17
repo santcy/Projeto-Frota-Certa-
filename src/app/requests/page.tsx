@@ -123,13 +123,15 @@ export default function RequestedPartsPage() {
   const { user, isUserLoading } = useAuth();
 
   const requestsQuery = useMemoFirebase(
-    () =>
-      firestore && user
-        ? query(
+    () => {
+        if (!firestore || !user || user.role === 'driver') {
+            return null; // Return null if not admin to avoid running the query
+        }
+        return query(
             collection(firestore, 'maintenanceRequests'),
             orderBy('createdAt', 'desc')
-          )
-        : null,
+        );
+    },
     [firestore, user]
   );
   
