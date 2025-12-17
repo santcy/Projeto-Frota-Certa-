@@ -36,7 +36,7 @@ export default function ReportsLightPage() {
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore && user?.role === 'admin'
+      firestore && user
         ? query(collection(firestore, 'checklists'), where('checklistType', '==', 'leve'), orderBy('date', 'desc'))
         : null,
     [firestore, user]
@@ -45,7 +45,7 @@ export default function ReportsLightPage() {
     useCollection<Checklist>(checklistsQuery);
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user?.role === 'admin' ? collection(firestore, 'vehicles') : null),
+    () => (firestore && user ? collection(firestore, 'vehicles') : null),
     [firestore, user]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
@@ -210,7 +210,8 @@ export default function ReportsLightPage() {
                         </TableCell>
                       </TableRow>
                     ))
-                  : checklists?.map((checklist) => {
+                  : checklists && checklists.length > 0 ? (
+                    checklists.map((checklist) => {
                       const vehicle = vehicles?.find(
                         (v) => v.id === checklist.vehicleId
                       );
@@ -264,7 +265,13 @@ export default function ReportsLightPage() {
                           </TableCell>
                         </TableRow>
                       );
-                    })}
+                    })) : (
+                        <TableRow>
+                            <TableCell colSpan={7} className="h-24 text-center">
+                                Nenhum checklist encontrado.
+                            </TableCell>
+                        </TableRow>
+                    )}
               </TableBody>
             </Table>
           </div>
