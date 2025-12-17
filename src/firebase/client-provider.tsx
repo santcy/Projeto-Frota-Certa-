@@ -4,7 +4,7 @@ import React, { useState, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, initializeFirestore, memoryLocalCache, type Firestore } from 'firebase/firestore';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
 interface FirebaseClientProviderProps {
@@ -15,10 +15,10 @@ interface FirebaseClientProviderProps {
 // It handles the singleton pattern to avoid re-initialization.
 function initializeFirebaseServices() {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  // Using initializeFirestore with cache options is idempotent.
-  const firestore = initializeFirestore(app, {
-    localCache: memoryLocalCache(),
-  });
+  // Use getFirestore() which is idempotent. It initializes Firestore with default settings
+  // on the first call and returns the existing instance on subsequent calls.
+  // This avoids the "initializeFirestore has already been called" error in HMR environments.
+  const firestore = getFirestore(app);
   const auth = getAuth(app);
   return { app, firestore, auth };
 }
