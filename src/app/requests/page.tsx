@@ -30,7 +30,7 @@ import {
   updateDocumentNonBlocking,
   WithId,
 } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, where } from 'firebase/firestore';
 import type { MaintenanceRequest, MaintenanceRequestStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/auth-context';
