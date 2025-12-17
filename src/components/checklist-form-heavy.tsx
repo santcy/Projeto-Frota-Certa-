@@ -1,9 +1,9 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   collection,
   doc,
@@ -45,7 +45,7 @@ import {
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
-import { Check, Send, Camera, RefreshCw } from 'lucide-react';
+import { Check, Send, Camera, RefreshCw, Wrench } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -59,6 +59,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 
 const heavyChecklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   .flat()
@@ -88,6 +89,11 @@ const formSchema = z.object({
   backPhotoUrl: z.string().url('É obrigatório tirar a foto de trás.'),
   items: z.object(heavyChecklistItemsSchema),
   notes: z.string().optional(),
+  maintenanceRequests: z.array(z.object({
+    itemId: z.string(),
+    itemName: z.string(),
+    quantity: z.coerce.number().min(1, 'A quantidade deve ser pelo menos 1.'),
+  })).optional(),
 });
 
 
@@ -228,8 +234,40 @@ export function ChecklistFormHeavy() {
       items: defaultItems,
       notes: '',
       fuelLevelOut: 100,
+      maintenanceRequests: [],
     },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "maintenanceRequests",
+  });
+
+  const watchedItems = form.watch('items');
+
+  useEffect(() => {
+    const currentRequests = form.getValues('maintenanceRequests') || [];
+    const requestedItemIds = new Set(currentRequests.map(req => req.itemId));
+
+    Object.entries(watchedItems).forEach(([itemId, status]) => {
+      const hasIssue = issueStatuses.includes(String(status));
+      const alreadyRequested = requestedItemIds.has(itemId);
+
+      if (hasIssue && !alreadyRequested) {
+        append({
+          itemId,
+          itemName: allItemsMap.get(itemId) || 'Item desconhecido',
+          quantity: 1,
+        });
+      } else if (!hasIssue && alreadyRequested) {
+        const indexToRemove = currentRequests.findIndex(req => req.itemId === itemId);
+        if (indexToRemove > -1) {
+          remove(indexToRemove);
+        }
+      }
+    });
+  }, [watchedItems, append, remove, form]);
+
 
   const photoFields: { key: PhotoKey; label: string }[] = [
     { key: 'dashboardPhotoUrl', label: 'Painel (Combustível 1)' },
@@ -270,6 +308,7 @@ export function ChecklistFormHeavy() {
         date: serverTimestamp(),
         checklistType: 'pesada' as 'pesada' | 'leve'
       };
+      delete (newChecklist as any).maintenanceRequests;
       batch.set(checklistRef, newChecklist);
 
       const hasIssues = Object.values(data.items).some(status => issueStatuses.includes(status));
@@ -281,6 +320,29 @@ export function ChecklistFormHeavy() {
         status: hasIssues ? 'Com Problemas' : 'Operacional',
       };
       batch.update(vehicleRef, vehicleUpdateData);
+
+      if (data.maintenanceRequests) {
+        for (const request of data.maintenanceRequests) {
+            const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+            const reportedStatus = data.items[request.itemId];
+
+            batch.set(requestRef, {
+                id: requestRef.id,
+                vehicleId: data.vehicleId,
+                checklistId: checklistRef.id,
+                itemId: request.itemId,
+                itemName: request.itemName,
+                quantity: request.quantity,
+                reportedStatus: String(reportedStatus),
+                requestStatus: 'Pendente',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                driverName: data.driverName,
+                vehiclePlate: vehicle.plate,
+                vehicleModel: vehicle.model,
+            });
+        }
+      }
 
       await batch.commit();
 
@@ -304,6 +366,7 @@ export function ChecklistFormHeavy() {
         rightSidePhotoUrl: undefined,
         frontPhotoUrl: undefined,
         backPhotoUrl: undefined,
+        maintenanceRequests: [],
       });
 
     } catch (error) {
@@ -560,6 +623,39 @@ export function ChecklistFormHeavy() {
             )
           )}
         </Accordion>
+
+        {fields.length > 0 && (
+          <>
+            <Separator />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5" />
+                  Solicitação de Peças
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-[1fr_auto] items-end gap-4 rounded-md border p-4">
+                     <FormField
+                        control={form.control}
+                        name={`maintenanceRequests.${index}.quantity`}
+                        render={({ field: qtyField }) => (
+                          <FormItem>
+                            <FormLabel>{field.itemName}</FormLabel>
+                            <FormControl>
+                               <Input type="number" placeholder="Qtd." {...qtyField} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         <Separator />
 
