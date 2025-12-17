@@ -32,6 +32,9 @@ service cloud.firestore {
 
       // Admins can update/delete any checklist. Users cannot update/delete.
       allow update, delete: if request.auth != null && isAdmin();
+      
+      // Explicitly deny list for non-admins to force filtered queries
+      allow list: if request.auth != null && isAdmin();
     }
 
     // Admins can manage all maintenance requests.

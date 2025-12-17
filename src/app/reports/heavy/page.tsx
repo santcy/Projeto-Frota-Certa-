@@ -43,11 +43,11 @@ export default function ReportsHeavyPage() {
       orderBy('date', 'desc')
     );
 
-    if (user.role === 'driver') {
-      return query(baseQuery, where('userId', '==', user.uid));
+    if (user.role === 'admin') {
+      return baseQuery;
     }
     
-    return baseQuery;
+    return query(baseQuery, where('userId', '==', user.uid));
   }, [firestore, user]);
 
   const { data: checklists, isLoading: isLoadingChecklists } =

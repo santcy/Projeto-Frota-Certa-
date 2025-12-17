@@ -102,24 +102,21 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     useDoc<Vehicle>(vehicleRef);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || isUserLoading) return null;
+    if (!firestore || !user) return null;
 
-    const baseQuery = [
+    const baseQuery = query(
+      collection(firestore, 'checklists'),
       where('vehicleId', '==', id),
       orderBy('date', 'desc')
-    ];
+    );
 
     if (user.role === 'admin') {
-      return query(collection(firestore, 'checklists'), ...baseQuery);
+      return baseQuery;
     }
     
     // For drivers, only fetch their own checklists for this vehicle
-    return query(
-      collection(firestore, 'checklists'),
-      ...baseQuery,
-      where('userId', '==', user.uid)
-    );
-  }, [firestore, user, id, isUserLoading]);
+    return query(baseQuery, where('userId', '==', user.uid));
+  }, [firestore, user, id]);
   
   const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
