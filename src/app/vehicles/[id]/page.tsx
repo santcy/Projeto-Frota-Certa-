@@ -91,7 +91,7 @@ function VehicleDetailsSkeleton() {
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const { firestore } = useFirebase();
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
   const router = useRouter();
 
   const vehicleRef = useMemoFirebase(
@@ -101,17 +101,26 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   const { data: vehicle, isLoading: isLoadingVehicle } =
     useDoc<Vehicle>(vehicleRef);
 
-  const checklistsQuery = useMemoFirebase(
-    () =>
-      firestore && user
-        ? query(
-            collection(firestore, 'checklists'),
-            where('vehicleId', '==', id),
-            orderBy('date', 'desc')
-          )
-        : null,
-    [firestore, user, id]
-  );
+  const checklistsQuery = useMemoFirebase(() => {
+    if (!firestore || !user || isUserLoading) return null;
+
+    const baseQuery = [
+      where('vehicleId', '==', id),
+      orderBy('date', 'desc')
+    ];
+
+    if (user.role === 'admin') {
+      return query(collection(firestore, 'checklists'), ...baseQuery);
+    }
+    
+    // For drivers, only fetch their own checklists for this vehicle
+    return query(
+      collection(firestore, 'checklists'),
+      ...baseQuery,
+      where('userId', '==', user.uid)
+    );
+  }, [firestore, user, id, isUserLoading]);
+  
   const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
 
@@ -214,7 +223,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     doc.save(`checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.pdf`);
   };
     
-  if (isLoadingVehicle || isLoadingChecklists) {
+  if (isLoadingVehicle || isLoadingChecklists || isUserLoading) {
     return <VehicleDetailsSkeleton />;
   }
   
@@ -242,19 +251,24 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
           </h1>
           <p className="text-muted-foreground">{vehicle.model}</p>
         </div>
-        <Button asChild className='w-full sm:w-auto'>
-          <Link href={`/vehicles/${vehicle.id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar Veículo
-          </Link>
-        </Button>
+        {user?.role === 'admin' && (
+          <Button asChild className='w-full sm:w-auto'>
+            <Link href={`/vehicles/${vehicle.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar Veículo
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Checklists</CardTitle>
           <CardDescription>
-            Veja todos os checklists de saída e retorno para este veículo.
+            {user?.role === 'admin' 
+              ? 'Veja todos os checklists de saída e retorno para este veículo.'
+              : 'Veja os seus checklists de saída e retorno para este veículo.'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
