@@ -50,7 +50,7 @@ function EditVehicleSkeleton() {
 
 
 export default function EditVehiclePage({ params }: { params: { id: string } }) {
-  const { id } = React.use(params);
+  const { id } = params;
   const { firestore } = useFirebase();
   const { user } = useAuth();
   
