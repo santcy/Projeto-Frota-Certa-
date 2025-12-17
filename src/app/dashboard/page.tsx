@@ -91,14 +91,16 @@ export default function Dashboard() {
   const { user, isUserLoading } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && !isUserLoading && user?.role === 'admin' ? collection(firestore, 'vehicles') : null),
-    [firestore, user, isUserLoading]
+    () => (firestore ? collection(firestore, 'vehicles') : null),
+    [firestore]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || isUserLoading || user?.role !== 'admin') return null;
+    if (!firestore || isUserLoading) return null;
+    if (user?.role !== 'admin') return null; // Non-admins should not fetch all checklists
+
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
   }, [firestore, user, isUserLoading]);
 

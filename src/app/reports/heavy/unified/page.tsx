@@ -47,10 +47,18 @@ export default function UnifiedReportHeavyPage() {
   const { user } = useAuth();
 
   const checklistsQuery = useMemoFirebase(
-    () =>
-      firestore && user
-        ? query(collection(firestore, 'checklists'), where('checklistType', '==', 'pesada'))
-        : null,
+    () => {
+      if (!firestore || !user) return null;
+      const baseQuery = where('checklistType', '==', 'pesada');
+      if (user.role === 'admin') {
+        return query(collection(firestore, 'checklists'), baseQuery);
+      }
+      return query(
+        collection(firestore, 'checklists'),
+        baseQuery,
+        where('userId', '==', user.uid)
+      );
+    },
     [firestore, user]
   );
   const { data: checklists, isLoading: isLoadingChecklists } =
