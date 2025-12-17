@@ -1,6 +1,12 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
 
     // Allow authenticated users to manage their own profile
     match /users/{userId} {
@@ -10,7 +16,7 @@ service cloud.firestore {
     // Admins can manage all vehicles, authenticated users can read
     match /vehicles/{vehicleId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null; // Simplified for now, should be admin only
+      allow write: if request.auth != null && isAdmin();
     }
 
     // Rules for the checklists collection
@@ -18,22 +24,20 @@ service cloud.firestore {
       // Allow authenticated users to list the collection (for reports)
       allow list: if request.auth != null;
 
-      // Allow a user to get their own documents
-      allow get: if request.auth != null; // Changed to allow any authenticated user to read for now for reports.
-                 // && request.auth.uid == resource.data.userId;
+      // Allow a user to get their own documents OR if the user is an admin
+      allow get: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
 
       // Allow a user to create a checklist for themselves
       allow create: if request.auth != null
                     && request.auth.uid == request.resource.data.userId;
 
-      // Allow a user to update or delete their own checklist
-      allow update, delete: if request.auth != null
-                            && request.auth.uid == resource.data.userId;
+      // Allow a user to update or delete their own checklist OR if they are an admin
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
     }
 
     // Admins can manage all maintenance requests
     match /maintenanceRequests/{requestId} {
-      allow read, write: if request.auth != null; // Simplified for now, should be admin only
+      allow read, write: if request.auth != null && isAdmin();
     }
   }
 }
