@@ -120,7 +120,7 @@ function RequestsPageSkeleton() {
 
 export default function RequestedPartsPage() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
 
   const requestsQuery = useMemoFirebase(
     () =>
@@ -132,8 +132,11 @@ export default function RequestedPartsPage() {
         : null,
     [firestore, user]
   );
-  const { data: requests, isLoading } =
+  
+  const { data: requests, isLoading: isLoadingRequests } =
     useCollection<MaintenanceRequest>(requestsQuery);
+    
+  const isLoading = isLoadingRequests || isUserLoading;
 
   const handleStatusChange = (
     requestId: string,
