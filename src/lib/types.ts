@@ -83,6 +83,7 @@ export const CHECKLIST_ITEMS_SECTIONS = {
   seguranca: 'Equipamentos de Segurança',
   diversos: 'Itens Diversos',
   limpeza: 'Limpeza',
+  pecas: 'Peças',
 };
 
 export const CHECKLIST_ITEMS: Record<keyof typeof CHECKLIST_ITEMS_SECTIONS, { id: string, label: string }[]> = {
@@ -142,6 +143,11 @@ export const CHECKLIST_ITEMS: Record<keyof typeof CHECKLIST_ITEMS_SECTIONS, { id
   ],
   limpeza: [
     { id: 'limpeza_veiculo', label: 'O veículo necessita de limpeza?' },
+  ],
+  pecas: [
+    { id: 'lona', label: 'Lona' },
+    { id: 'corda', label: 'Corda' },
+    { id: 'cinta', label: 'Cinta' },
   ]
 };
 
