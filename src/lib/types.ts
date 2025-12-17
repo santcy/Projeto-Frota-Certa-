@@ -220,5 +220,3 @@ export const CHECKLIST_ITEMS_LEVE: Record<
     { id: 'chaves_leve', label: 'Chaves', statuses: lightFleetStatuses },
   ],
 };
-
-    

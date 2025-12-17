@@ -22,6 +22,10 @@
           "type": "string",
           "description": "The email address of the user.",
           "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the user."
         }
       },
       "required": [
@@ -340,4 +344,3 @@
     "reasoning": "The Firestore data structure is designed to manage vehicle maintenance and checklists within the 'Rota Certa' application, focusing on security, scalability, and ease of debugging. The structure prioritizes authorization independence to avoid hierarchical `get()` calls in security rules, which can hinder atomic operations and complicate debugging.\n\nTo achieve Authorization Independence (Strategy A), the design denormalizes user roles into the vehicles collection. This allows for direct verification of a user's role without needing to fetch related user documents.\n\nStructural Segregation (Strategy B) is applied by dedicating specific collections for different data types. This ensures each collection has a homogeneous security posture.\n\nAccess Modeling (Strategy C) uses a combination of path-based ownership for user-related data and membership maps for collaborative data (if needed in future versions). The `/users/{userId}/vehicles/{vehicleId}` path establishes clear ownership for vehicles assigned to specific users.\n\nQAPs (Rules are not Filters) are supported through structural segregation, ensuring that list operations can be secured efficiently. The separation of user-owned vehicle data under `/users/{userId}/vehicles/{vehicleId}` allows for targeted list queries based on user identity.\n\nThe explicit modeling of vehicle and checklist states, combined with standardized naming conventions (Strategy D), enhances data clarity and predictability, which in turn simplifies security rule creation and maintenance."
   }
 }
-    
