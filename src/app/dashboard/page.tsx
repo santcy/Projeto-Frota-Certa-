@@ -24,6 +24,7 @@ import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_LEVE } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/auth-context';
 
 function DashboardCard({
   title,
@@ -87,18 +88,19 @@ function getProblemDescription(checklist: WithId<Checklist>): string | string[] 
 
 export default function Dashboard() {
   const { firestore } = useFirebase();
+  const { user } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
+    () => (firestore && user?.role === 'admin' ? collection(firestore, 'vehicles') : null),
+    [firestore, user]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || user?.role !== 'admin') return null;
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
-  }, [firestore]);
+  }, [firestore, user]);
 
   const { data: recentChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
@@ -209,7 +211,7 @@ export default function Dashboard() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      Nenhum alerta recente.
+                      {user?.role === 'admin' ? 'Nenhum alerta recente.' : 'Seção de alertas disponível apenas para administradores.'}
                     </TableCell>
                   </TableRow>
                 )}
