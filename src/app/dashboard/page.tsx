@@ -102,6 +102,7 @@ export default function Dashboard() {
     
     // Admins can fetch all checklists for dashboard alerts.
     // Non-admins cannot, as it would violate security rules.
+    // We return null for non-admins to avoid breaking hook rules.
     if (user?.role !== 'admin') return null;
 
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
