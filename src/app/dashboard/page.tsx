@@ -22,6 +22,7 @@ import {
 } from '@/firebase';
 import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
+import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_LEVE } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function DashboardCard({
@@ -60,6 +61,35 @@ function DashboardCard({
   );
 }
 
+const allHeavyItems = Object.values(CHECKLIST_ITEMS).flat();
+const allLightItems = Object.values(CHECKLIST_ITEMS_LEVE).flat();
+const allItemsMap = new Map(
+  [...allHeavyItems, ...allLightItems].map((item) => [item.id, item.label])
+);
+
+const issueStatuses: string[] = ['issue', 'Avariado', 'Incompleto', 'Desgastado'];
+
+function getProblemDescription(checklist: WithId<Checklist>): string {
+  if (!checklist.items) {
+    return checklist.notes || 'Problema reportado no checklist.';
+  }
+
+  const problemItems = Object.entries(checklist.items)
+    .filter(([_, status]) => issueStatuses.includes(String(status)))
+    .map(([itemId, _]) => allItemsMap.get(itemId) || itemId);
+
+  if (problemItems.length > 0) {
+    const firstTwo = problemItems.slice(0, 2).join(', ');
+    const remaining = problemItems.length - 2;
+    if (remaining > 0) {
+        return `${firstTwo} e mais ${remaining}...`;
+    }
+    return firstTwo;
+  }
+  
+  return checklist.notes || 'Problema reportado no checklist.';
+}
+
 export default function Dashboard() {
   const { firestore } = useFirebase();
 
@@ -89,7 +119,7 @@ export default function Dashboard() {
   const hasIssues = (checklist: WithId<Checklist>) => {
     if (!checklist.items) return false;
     return Object.values(checklist.items).some(
-      (status) => status === 'issue' || status === 'Avariado' || status === 'Incompleto' || status === 'Desgastado'
+      (status) => issueStatuses.includes(String(status))
     );
   };
   
@@ -167,7 +197,7 @@ export default function Dashboard() {
                           {alert.date.toDate().toLocaleDateString('pt-BR')}
                         </TableCell>
                         <TableCell className="text-destructive">
-                          {alert.notes || 'Problema reportado no checklist.'}
+                          {getProblemDescription(alert)}
                         </TableCell>
                       </TableRow>
                     );
