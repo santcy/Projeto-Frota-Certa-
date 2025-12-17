@@ -41,10 +41,6 @@ export default function ReportsLightPage() {
       where('checklistType', '==', 'leve'),
       orderBy('date', 'desc')
     ];
-
-    if (user.role === 'driver') {
-      queryConstraints.push(where('userId', '==', user.uid));
-    }
     
     return query(collection(firestore, 'checklists'), ...queryConstraints);
   }, [firestore, user]);

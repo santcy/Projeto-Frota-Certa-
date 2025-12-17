@@ -99,10 +99,6 @@ export default function Dashboard() {
 
   const checklistsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    // Admins can fetch all checklists for dashboard alerts.
-    // Non-admins cannot, so we return null to avoid breaking hook rules.
-    if (user?.role !== 'admin') return null;
-
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
   }, [firestore, user]);
 
@@ -176,7 +172,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingChecklists && user?.role === 'admin' ? (
+                {isLoadingChecklists ? (
                   Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -215,7 +211,7 @@ export default function Dashboard() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      {user?.role === 'admin' ? 'Nenhum alerta recente.' : 'Seção de alertas disponível apenas para administradores.'}
+                      Nenhum alerta recente.
                     </TableCell>
                   </TableRow>
                 )}

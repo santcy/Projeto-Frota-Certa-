@@ -125,18 +125,6 @@ export default function RequestedPartsPage() {
   const requestsQuery = useMemoFirebase(
     () => {
         if (!firestore || !user) return null;
-        // The UI will block non-admins, but the query should always be valid.
-        // Returning a query that fetches nothing for drivers is safer than returning null.
-        if (user.role === 'driver') {
-            return query(
-                collection(firestore, 'maintenanceRequests'),
-                orderBy('createdAt', 'desc'),
-                // This condition will never be met, effectively returning an empty list for drivers
-                // without violating security rules or hook rules.
-                where('userId', '==', 'non-existent-user-id-for-driver-role')
-            );
-        }
-
         return query(
             collection(firestore, 'maintenanceRequests'),
             orderBy('createdAt', 'desc')
@@ -166,19 +154,6 @@ export default function RequestedPartsPage() {
     return (
          <div className="mx-auto w-full max-w-7xl">
             <RequestsPageSkeleton />
-        </div>
-    );
-  }
-  
-  if (user?.role === 'driver') {
-      return (
-        <div className="mx-auto w-full max-w-7xl">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Acesso Negado</CardTitle>
-                    <CardDescription>Você não tem permissão para acessar esta página.</CardDescription>
-                </CardHeader>
-            </Card>
         </div>
     );
   }

@@ -41,10 +41,6 @@ export default function ReportsHeavyPage() {
         where('checklistType', '==', 'pesada'),
         orderBy('date', 'desc')
     ];
-
-    if (user.role === 'driver') {
-        queryConstraints.push(where('userId', '==', user.uid));
-    }
     
     return query(collection(firestore, 'checklists'), ...queryConstraints);
   }, [firestore, user]);

@@ -34,88 +34,69 @@ export function SidebarNav() {
   const isReportsActive = pathname.startsWith('/reports');
 
   const renderMenuItems = () => {
-    // Non-driver users (e.g., 'admin') get full access
-    if (user?.role !== 'driver') {
-        return (
-             <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
-                    <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/vehicles')} tooltip={{ children: 'Veículos' }}>
-                    <Link href="/vehicles"><Truck /><span>Veículos</span></Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/light')} tooltip={{ children: 'Checklist Leve' }}>
-                    <Link href="/checklist/light"><ClipboardCheck /><span>Checklist Leve</span></Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/heavy')} tooltip={{ children: 'Checklist Pesado' }}>
-                    <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Solicitações de Manutenção' }}>
-                    <Link href="/requests"><Wrench /><span>Solicitações</span></Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <Collapsible>
-                    <CollapsibleTrigger asChild>
-                        <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
-                        <Archive />
-                        <span>Histórico</span>
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
-                                    <Link href="/reports/light">Histórico Leve</Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
-                                    <Link href="/reports/heavy">Histórico Pesado</Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                             <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
-                                    <Link href="/reports/light/unified">Unificado Leve</Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                             <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
-                                    <Link href="/reports/heavy/unified">Unificado Pesado</Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                    </Collapsible>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        );
-    }
-
-    // Driver view - limited access
     return (
         <SidebarMenu>
+          <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
+              <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/vehicles')} tooltip={{ children: 'Veículos' }}>
+              <Link href="/vehicles"><Truck /><span>Veículos</span></Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/light')} tooltip={{ children: 'Checklist Leve' }}>
+              <Link href="/checklist/light"><ClipboardCheck /><span>Checklist Leve</span></Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/heavy')} tooltip={{ children: 'Checklist Pesado' }}>
+              <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/light')} tooltip={{ children: 'Checklist Leve' }}>
-                <Link href="/checklist/light"><ClipboardCheck /><span>Checklist Leve</span></Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/checklist/heavy')} tooltip={{ children: 'Checklist Pesado' }}>
-                <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-    )
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Solicitações de Manutenção' }}>
+              <Link href="/requests"><Wrench /><span>Solicitações</span></Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+              <Collapsible>
+              <CollapsibleTrigger asChild>
+                  <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
+                  <Archive />
+                  <span>Histórico</span>
+                  </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                  <SidebarMenuSub>
+                      <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
+                              <Link href="/reports/light">Histórico Leve</Link>
+                          </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
+                              <Link href="/reports/heavy">Histórico Pesado</Link>
+                          </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
+                              <Link href="/reports/light/unified">Unificado Leve</Link>
+                          </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
+                              <Link href="/reports/heavy/unified">Unificado Pesado</Link>
+                          </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                  </SidebarMenuSub>
+              </CollapsibleContent>
+              </Collapsible>
+          </SidebarMenuItem>
+      </SidebarMenu>
+    );
   }
 
   return (

@@ -51,11 +51,7 @@ export default function UnifiedReportHeavyPage() {
 
     const baseQuery = collection(firestore, 'checklists');
     const queryConstraints = [where('checklistType', '==', 'pesada')];
-
-    if (user.role === 'driver') {
-      queryConstraints.push(where('userId', '==', user.uid));
-    }
-
+    
     return query(baseQuery, ...queryConstraints);
   }, [firestore, user]);
 

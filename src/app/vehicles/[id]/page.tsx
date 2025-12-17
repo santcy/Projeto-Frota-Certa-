@@ -111,10 +111,6 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
       orderBy('date', 'desc'),
     ];
 
-    if (user.role === 'driver') {
-      queryConstraints.push(where('userId', '==', user.uid));
-    }
-
     return query(collection(firestore, 'checklists'), ...queryConstraints);
   }, [firestore, user, id]);
   
@@ -248,24 +244,19 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
           </h1>
           <p className="text-muted-foreground">{vehicle.model}</p>
         </div>
-        {user?.role === 'admin' && (
-          <Button asChild className='w-full sm:w-auto'>
-            <Link href={`/vehicles/${vehicle.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Editar Veículo
-            </Link>
-          </Button>
-        )}
+        <Button asChild className='w-full sm:w-auto'>
+          <Link href={`/vehicles/${vehicle.id}/edit`}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar Veículo
+          </Link>
+        </Button>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Checklists</CardTitle>
           <CardDescription>
-            {user?.role === 'admin' 
-              ? 'Veja todos os checklists de saída e retorno para este veículo.'
-              : 'Veja os seus checklists de saída e retorno para este veículo.'
-            }
+            Veja todos os checklists de saída e retorno para este veículo.
           </CardDescription>
         </CardHeader>
         <CardContent>
