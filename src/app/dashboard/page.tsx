@@ -98,8 +98,9 @@ export default function Dashboard() {
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || isUserLoading) return null;
-    if (user?.role !== 'admin') return null; // Non-admins should not fetch all checklists
+    if (!firestore || isUserLoading || !user) return null;
+    // IMPORTANT: Only admins should fetch all checklists. Drivers have no access here.
+    if (user.role !== 'admin') return null;
 
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
   }, [firestore, user, isUserLoading]);
@@ -174,7 +175,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingChecklists ? (
+                {isLoadingChecklists && user?.role === 'admin' ? (
                   Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
