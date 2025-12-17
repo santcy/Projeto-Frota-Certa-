@@ -8,12 +8,13 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
-    // Allow authenticated users to manage their own profile
+    // Users can read/write their own profile. Admins can read any profile.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Admins can manage all vehicles, authenticated users can read
+    // Admins can manage all vehicles. Authenticated users can read vehicle list and details.
     match /vehicles/{vehicleId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && isAdmin();
@@ -25,16 +26,21 @@ service cloud.firestore {
       allow get: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
 
       // Allow a user to create a checklist for themselves
+      // The user ID in the new document must match the authenticated user's ID.
       allow create: if request.auth != null
                     && request.auth.uid == request.resource.data.userId;
 
-      // Allow a user to update or delete their own checklist OR if they are an admin
-      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+      // Admins can update/delete any checklist. Users cannot update/delete.
+      allow update, delete: if request.auth != null && isAdmin();
     }
 
-    // Admins can manage all maintenance requests
+    // Admins can manage all maintenance requests.
+    // Drivers can create them (via checklist submission), but not read/update/delete directly.
     match /maintenanceRequests/{requestId} {
       allow read, write: if request.auth != null && isAdmin();
+      // Allow create for any authenticated user, as it's part of a batch write
+      // initiated by a checklist, which is already secured.
+      allow create: if request.auth != null;
     }
   }
 }
