@@ -30,7 +30,6 @@ import {
   useMemoFirebase,
   WithId,
 } from '@/firebase';
-import { useAuth } from '@/context/auth-context';
 import { doc, collection, query, where, orderBy, QueryConstraint } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
@@ -91,7 +90,6 @@ function VehicleDetailsSkeleton() {
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const { firestore } = useFirebase();
-  const { user, isUserLoading } = useAuth();
   const router = useRouter();
 
   const vehicleRef = useMemoFirebase(
@@ -102,7 +100,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     useDoc<Vehicle>(vehicleRef);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore) {
+    if (!firestore || !id) {
       return null;
     }
 
@@ -216,7 +214,7 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     doc.save(`checklist-${vehicle.plate}-${checklist.id.substring(0, 5)}.pdf`);
   };
     
-  if (isLoadingVehicle || isLoadingChecklists || isUserLoading) {
+  if (isLoadingVehicle || isLoadingChecklists) {
     return <VehicleDetailsSkeleton />;
   }
   

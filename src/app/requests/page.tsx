@@ -33,7 +33,6 @@ import {
 import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
 import type { MaintenanceRequest, MaintenanceRequestStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/context/auth-context';
 import { format } from 'date-fns';
 
 const statusVariants: Record<
@@ -120,7 +119,6 @@ function RequestsPageSkeleton() {
 
 export default function RequestedPartsPage() {
   const { firestore } = useFirebase();
-  const { user, isUserLoading } = useAuth();
 
   const requestsQuery = useMemoFirebase(
     () => {
@@ -136,7 +134,7 @@ export default function RequestedPartsPage() {
   const { data: requests, isLoading: isLoadingRequests } =
     useCollection<MaintenanceRequest>(requestsQuery);
     
-  const isLoading = isLoadingRequests || isUserLoading;
+  const isLoading = isLoadingRequests;
 
   const handleStatusChange = (
     requestId: string,

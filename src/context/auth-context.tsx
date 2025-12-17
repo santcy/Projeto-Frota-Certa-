@@ -5,8 +5,6 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 
-export type UserRole = 'admin' | 'driver';
-
 export interface AppUser {
   uid: string;
   name: string | null;
@@ -30,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => (firestore && firebaseUser?.uid ? doc(firestore, 'users', firebaseUser.uid) : null),
     [firestore, firebaseUser?.uid]
   );
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ userType: UserRole, name: string, email: string, phoneNumber: string }>(userDocRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ name: string, email: string, phoneNumber: string }>(userDocRef);
 
   const user = useMemo<AppUser | null>(() => {
     if (!firebaseUser || !userProfile) return null;

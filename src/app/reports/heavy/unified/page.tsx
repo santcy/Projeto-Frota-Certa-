@@ -20,7 +20,6 @@ import type { Vehicle, Checklist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { CHECKLIST_ITEMS } from '@/lib/types';
