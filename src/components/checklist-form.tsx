@@ -601,21 +601,20 @@ export function ChecklistForm() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-[1fr_auto] items-end gap-4 rounded-md border p-4">
-                     <FormField
-                        control={form.control}
-                        name={`maintenanceRequests.${index}.quantity`}
-                        render={({ field: qtyField }) => (
-                          <FormItem>
-                            <FormLabel>{field.itemName}</FormLabel>
-                            <FormControl>
-                               <Input type="number" placeholder="Qtd." {...qtyField} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                  </div>
+                  <FormField
+                    key={field.id}
+                    control={form.control}
+                    name={`maintenanceRequests.${index}.quantity`}
+                    render={({ field: qtyField }) => (
+                      <FormItem className="rounded-md border p-4">
+                        <FormLabel>{field.itemName}</FormLabel>
+                        <FormControl>
+                           <Input type="number" placeholder="Qtd." {...qtyField} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 ))}
               </CardContent>
             </Card>
@@ -665,3 +664,5 @@ export function ChecklistForm() {
     </Form>
   );
 }
+
+    
