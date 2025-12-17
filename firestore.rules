@@ -21,9 +21,6 @@ service cloud.firestore {
 
     // Rules for the checklists collection
     match /checklists/{checklistId} {
-      // Allow authenticated users to list the collection (for reports)
-      allow list: if request.auth != null;
-
       // Allow a user to get their own documents OR if the user is an admin
       allow get: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
 
