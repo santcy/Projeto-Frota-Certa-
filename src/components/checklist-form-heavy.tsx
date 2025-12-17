@@ -623,7 +623,7 @@ export function ChecklistFormHeavy() {
         <Separator />
 
         <div className="space-y-4">
-            <h3 className="text-lg font-medium">Itens Solicitados</h3>
+            <h3 className="text-lg font-medium">SOLICITAR PEÇAS</h3>
             {fields.map((field, index) => (
                 <FormField
                     key={field.id}
