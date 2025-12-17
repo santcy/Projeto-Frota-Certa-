@@ -13,10 +13,22 @@ service cloud.firestore {
       allow write: if request.auth != null; // Simplified for now, should be admin only
     }
 
-    // Authenticated users can list checklists for reports
-    // Write access is also open for authenticated users for now
+    // Rules for the checklists collection
     match /checklists/{checklistId} {
-      allow read, write: if request.auth != null;
+      // Allow authenticated users to list the collection (for reports)
+      allow list: if request.auth != null;
+
+      // Allow a user to get their own documents
+      allow get: if request.auth != null; // Changed to allow any authenticated user to read for now for reports.
+                 // && request.auth.uid == resource.data.userId;
+
+      // Allow a user to create a checklist for themselves
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+
+      // Allow a user to update or delete their own checklist
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == resource.data.userId;
     }
 
     // Admins can manage all maintenance requests
