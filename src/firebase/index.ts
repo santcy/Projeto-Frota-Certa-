@@ -8,14 +8,21 @@ import { firebaseConfig } from './config';
 
 // Safely initialize Firebase and export the singleton instances.
 // This function handles the singleton pattern to avoid re-initialization.
-function initializeFirebaseServices() {
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  const firestore = getFirestore(app);
-  const auth = getAuth(app);
-  return { app, firestore, auth };
+let app: FirebaseApp;
+let auth: Auth;
+let firestore: Firestore;
+
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
-export const { app: firebaseApp, firestore, auth } = initializeFirebaseServices();
+auth = getAuth(app);
+firestore = getFirestore(app);
+
+
+export { app as firebaseApp, auth, firestore };
 
 
 export * from './provider';
