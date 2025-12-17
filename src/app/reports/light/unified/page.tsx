@@ -50,7 +50,7 @@ export default function UnifiedReportLightPage() {
     () => {
       if (!firestore || !user) return null;
       const baseQuery = [where('checklistType', '==', 'leve')];
-      if (user.role === 'admin') {
+      if (user.role !== 'driver') {
         return query(collection(firestore, 'checklists'), ...baseQuery);
       }
       return query(

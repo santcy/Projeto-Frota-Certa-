@@ -34,7 +34,8 @@ export function SidebarNav() {
   const isReportsActive = pathname.startsWith('/reports');
 
   const renderMenuItems = () => {
-    if (user?.role === 'admin') {
+    // Non-driver users (e.g., 'admin') get full access
+    if (user?.role !== 'driver') {
         return (
              <SidebarMenu>
                 <SidebarMenuItem>
@@ -100,7 +101,7 @@ export function SidebarNav() {
         );
     }
 
-    // Driver view
+    // Driver view - limited access
     return (
         <SidebarMenu>
             <SidebarMenuItem>

@@ -155,7 +155,7 @@ export default function RequestedPartsPage() {
     );
   }
   
-  if (user?.role !== 'admin') {
+  if (user?.role === 'driver') {
       return (
         <div className="mx-auto w-full max-w-7xl">
             <Card>

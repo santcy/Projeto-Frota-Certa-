@@ -41,7 +41,7 @@ export default function ReportsLightPage() {
         where('checklistType', '==', 'leve'),
         orderBy('date', 'desc'),
       ];
-      if (user.role === 'admin') {
+      if (user.role !== 'driver') {
         return query(collection(firestore, 'checklists'), ...baseQuery);
       }
       return query(collection(firestore, 'checklists'), where('userId', '==', user.uid), ...baseQuery);

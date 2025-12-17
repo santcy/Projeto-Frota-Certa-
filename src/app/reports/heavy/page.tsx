@@ -43,7 +43,7 @@ export default function ReportsHeavyPage() {
         orderBy('date', 'desc'),
       ];
 
-      if (user.role === 'admin') {
+      if (user.role !== 'driver') {
         return query(collection(firestore, 'checklists'), ...baseQuery);
       }
       
@@ -293,5 +293,3 @@ export default function ReportsHeavyPage() {
     </div>
   );
 }
-
-    
