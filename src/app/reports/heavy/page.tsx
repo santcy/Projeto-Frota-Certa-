@@ -37,14 +37,22 @@ export default function ReportsHeavyPage() {
   const checklistsQuery = useMemoFirebase(
     () => {
       if (!firestore || !user) return null;
-      const baseQuery = [
+      
+      const baseQuery: any[] = [
         where('checklistType', '==', 'pesada'),
         orderBy('date', 'desc'),
       ];
+
       if (user.role === 'admin') {
         return query(collection(firestore, 'checklists'), ...baseQuery);
       }
-      return query(collection(firestore, 'checklists'), where('userId', '==', user.uid), ...baseQuery);
+      
+      // For drivers, only fetch their own checklists
+      return query(
+        collection(firestore, 'checklists'), 
+        where('userId', '==', user.uid), 
+        ...baseQuery
+      );
     },
     [firestore, user]
   );
@@ -285,3 +293,5 @@ export default function ReportsHeavyPage() {
     </div>
   );
 }
+
+    
