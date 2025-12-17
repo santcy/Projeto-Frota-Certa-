@@ -46,21 +46,24 @@ export default function UnifiedReportHeavyPage() {
   const { firestore } = useFirebase();
   const { user } = useAuth();
 
-  const checklistsQuery = useMemoFirebase(
-    () => {
-      if (!firestore || !user) return null;
-      const baseQuery = [where('checklistType', '==', 'pesada')];
-      if (user.role !== 'driver') {
-        return query(collection(firestore, 'checklists'), ...baseQuery);
-      }
-      return query(
-        collection(firestore, 'checklists'),
-        ...baseQuery,
-        where('userId', '==', user.uid)
-      );
-    },
-    [firestore, user]
-  );
+  const checklistsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    
+    const baseQuery = [where('checklistType', '==', 'pesada')];
+
+    // For drivers, only fetch their own checklists. For others, fetch all.
+    const finalQuery =
+      user.role === 'driver'
+        ? query(
+            collection(firestore, 'checklists'),
+            ...baseQuery,
+            where('userId', '==', user.uid)
+          )
+        : query(collection(firestore, 'checklists'), ...baseQuery);
+
+    return finalQuery;
+  }, [firestore, user]);
+
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
 

@@ -34,20 +34,23 @@ export default function ReportsLightPage() {
   const { firestore } = useFirebase();
   const { user } = useAuth();
 
-  const checklistsQuery = useMemoFirebase(
-    () => {
-      if (!firestore || !user) return null;
-      const baseQuery = [
-        where('checklistType', '==', 'leve'),
-        orderBy('date', 'desc'),
-      ];
-      if (user.role !== 'driver') {
-        return query(collection(firestore, 'checklists'), ...baseQuery);
-      }
-      return query(collection(firestore, 'checklists'), where('userId', '==', user.uid), ...baseQuery);
-    },
-    [firestore, user]
-  );
+  const checklistsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    
+    const baseQuery = [
+      where('checklistType', '==', 'leve'),
+      orderBy('date', 'desc'),
+    ];
+    
+    // For drivers, only fetch their own checklists. For others, fetch all.
+    const finalQuery =
+      user.role === 'driver'
+        ? query(collection(firestore, 'checklists'), where('userId', '==', user.uid), ...baseQuery)
+        : query(collection(firestore, 'checklists'), ...baseQuery);
+
+    return finalQuery;
+  }, [firestore, user]);
+
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
 
