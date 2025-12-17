@@ -49,13 +49,13 @@ export default function UnifiedReportLightPage() {
   const checklistsQuery = useMemoFirebase(
     () => {
       if (!firestore || !user) return null;
-      const baseQuery = where('checklistType', '==', 'leve');
+      const baseQuery = [where('checklistType', '==', 'leve')];
       if (user.role === 'admin') {
-        return query(collection(firestore, 'checklists'), baseQuery);
+        return query(collection(firestore, 'checklists'), ...baseQuery);
       }
       return query(
         collection(firestore, 'checklists'),
-        baseQuery,
+        ...baseQuery,
         where('userId', '==', user.uid)
       );
     },
