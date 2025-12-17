@@ -124,10 +124,18 @@ export default function RequestedPartsPage() {
 
   const requestsQuery = useMemoFirebase(
     () => {
-        if (!firestore) return null;
-        // This query is only for admins. Drivers are blocked by the UI below.
-        // Return null for drivers to prevent running a query that will be denied.
-        if (user?.role === 'driver') return null;
+        if (!firestore || !user) return null;
+        // The UI will block non-admins, but the query should always be valid.
+        // Returning a query that fetches nothing for drivers is safer than returning null.
+        if (user.role === 'driver') {
+            return query(
+                collection(firestore, 'maintenanceRequests'),
+                orderBy('createdAt', 'desc'),
+                // This condition will never be met, effectively returning an empty list for drivers
+                // without violating security rules or hook rules.
+                where('userId', '==', 'non-existent-user-id-for-driver-role')
+            );
+        }
 
         return query(
             collection(firestore, 'maintenanceRequests'),
