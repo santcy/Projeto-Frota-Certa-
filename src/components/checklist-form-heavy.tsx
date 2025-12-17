@@ -45,7 +45,7 @@ import {
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
-import { Check, Send, Camera, RefreshCw, Wrench } from 'lucide-react';
+import { Check, Send, Camera, RefreshCw, PlusCircle, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -59,7 +59,6 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 
 const heavyChecklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   .flat()
@@ -88,6 +87,9 @@ const formSchema = z.object({
   frontPhotoUrl: z.string().url('É obrigatório tirar a foto da frente.'),
   backPhotoUrl: z.string().url('É obrigatório tirar a foto de trás.'),
   items: z.object(heavyChecklistItemsSchema),
+  requestedItems: z.array(z.object({
+    name: z.string().min(3, 'O nome da peça é obrigatório.'),
+  })).optional(),
   notes: z.string().optional(),
 });
 
@@ -229,7 +231,13 @@ export function ChecklistFormHeavy() {
       items: defaultItems,
       notes: '',
       fuelLevelOut: 100,
+      requestedItems: [],
     },
+  });
+  
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'requestedItems',
   });
 
   const photoFields: { key: PhotoKey; label: string }[] = [
@@ -309,6 +317,29 @@ export function ChecklistFormHeavy() {
         }
       }
 
+      // Create maintenance requests for dynamically added items
+      if (data.requestedItems && data.requestedItems.length > 0) {
+        for (const item of data.requestedItems) {
+          const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+          batch.set(requestRef, {
+            id: requestRef.id,
+            vehicleId: data.vehicleId,
+            checklistId: checklistRef.id,
+            itemId: `peca_${item.name.replace(/\s+/g, '_').toLowerCase()}`,
+            itemName: item.name,
+            quantity: 1, // Default to 1 for dynamically added parts
+            reportedStatus: 'Solicitado pelo motorista',
+            requestStatus: 'Pendente',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            driverName: data.driverName,
+            vehiclePlate: vehicle.plate,
+            vehicleModel: vehicle.model,
+          });
+        }
+      }
+
+
       await batch.commit();
 
       toast({
@@ -325,6 +356,7 @@ export function ChecklistFormHeavy() {
         fuelLevelOut: 100,
         items: defaultItems,
         notes: '',
+        requestedItems: [],
         dashboardPhotoUrl: undefined,
         dashboardPhotoUrl2: undefined,
         leftSidePhotoUrl: undefined,
@@ -587,6 +619,45 @@ export function ChecklistFormHeavy() {
             )
           )}
         </Accordion>
+        
+        <Separator />
+
+        <div className="space-y-4">
+            <h3 className="text-lg font-medium">Itens Solicitados</h3>
+            {fields.map((field, index) => (
+                <FormField
+                    key={field.id}
+                    control={form.control}
+                    name={`requestedItems.${index}.name`}
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="sr-only">Peça {index + 1}</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <FormControl>
+                                <Input {...field} placeholder={`Nome da peça ${index + 1}`} />
+                            </FormControl>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Remover Peça</span>
+                            </Button>
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => append({ name: '' })}
+            >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Peça
+            </Button>
+        </div>
+
 
         <Separator />
 
