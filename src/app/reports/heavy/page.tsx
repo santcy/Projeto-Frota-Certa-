@@ -36,7 +36,7 @@ export default function ReportsHeavyPage() {
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore && user
+      firestore && user?.role === 'admin'
         ? query(collection(firestore, 'checklists'), where('checklistType', '==', 'pesada'), orderBy('date', 'desc'))
         : null,
     [firestore, user]
@@ -45,7 +45,7 @@ export default function ReportsHeavyPage() {
     useCollection<Checklist>(checklistsQuery);
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'vehicles') : null),
+    () => (firestore && user?.role === 'admin' ? collection(firestore, 'vehicles') : null),
     [firestore, user]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =

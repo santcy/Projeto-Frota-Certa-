@@ -9,13 +9,13 @@ import {
   useFirebase,
   useMemoFirebase,
   WithId,
-  useUser,
 } from '@/firebase';
 import { collection, orderBy, query } from 'firebase/firestore';
 import type { Vehicle, Checklist, VehicleStatus } from '@/lib/types';
 import { ArrowRight, Fuel, Gauge, User, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/auth-context';
 
 function getStatusVariant(status?: VehicleStatus) {
   switch (status) {
@@ -127,7 +127,7 @@ function VehicleCardSkeleton() {
 
 export default function VehiclesPage() {
   const { firestore } = useFirebase();
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
     () =>
