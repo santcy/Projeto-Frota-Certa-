@@ -102,7 +102,9 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
     useDoc<Vehicle>(vehicleRef);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user) {
+      return null;
+    }
 
     const queryConstraints: QueryConstraint[] = [
       where('vehicleId', '==', id),
