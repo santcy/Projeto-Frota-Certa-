@@ -31,7 +31,7 @@ import {
   WithId,
 } from '@/firebase';
 import { useAuth } from '@/context/auth-context';
-import { doc, collection, query, where, orderBy } from 'firebase/firestore';
+import { doc, collection, query, where, orderBy, QueryConstraint } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -104,18 +104,16 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
   const checklistsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
 
-    const baseQuery = query(
-      collection(firestore, 'checklists'),
+    const queryConstraints: QueryConstraint[] = [
       where('vehicleId', '==', id),
-      orderBy('date', 'desc')
-    );
+      orderBy('date', 'desc'),
+    ];
 
-    if (user.role === 'admin') {
-      return baseQuery;
+    if (user.role === 'driver') {
+      queryConstraints.push(where('userId', '==', user.uid));
     }
-    
-    // For drivers, only fetch their own checklists for this vehicle
-    return query(baseQuery, where('userId', '==', user.uid));
+
+    return query(collection(firestore, 'checklists'), ...queryConstraints);
   }, [firestore, user, id]);
   
   const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
