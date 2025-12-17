@@ -52,7 +52,7 @@ function StatusBadge({ status }: { status: MaintenanceRequestStatus }) {
 
 function RequestsPageSkeleton() {
     return (
-        <div className="space-y-6">
+        <div className="mx-auto w-full max-w-7xl space-y-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">
                 Solicitações de Manutenção
@@ -124,9 +124,11 @@ export default function RequestedPartsPage() {
 
   const requestsQuery = useMemoFirebase(
     () => {
-        if (!firestore || !user || user.role === 'driver') {
-            return null; // Return null if not admin to avoid running the query
-        }
+        if (!firestore) return null;
+        // This query is only for admins. Drivers are blocked by the UI below.
+        // Return null for drivers to prevent running a query that will be denied.
+        if (user?.role === 'driver') return null;
+
         return query(
             collection(firestore, 'maintenanceRequests'),
             orderBy('createdAt', 'desc')
