@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirebase, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, QueryConstraint } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -36,18 +36,17 @@ export default function ReportsLightPage() {
 
   const checklistsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-
-    const baseQuery = query(
-      collection(firestore, 'checklists'),
+    
+    const queryConstraints: QueryConstraint[] = [
       where('checklistType', '==', 'leve'),
       orderBy('date', 'desc')
-    );
+    ];
 
-    if (user.role === 'admin') {
-      return baseQuery;
+    if (user.role === 'driver') {
+      queryConstraints.push(where('userId', '==', user.uid));
     }
     
-    return query(baseQuery, where('userId', '==', user.uid));
+    return query(collection(firestore, 'checklists'), ...queryConstraints);
   }, [firestore, user]);
 
   const { data: checklists, isLoading: isLoadingChecklists } =
