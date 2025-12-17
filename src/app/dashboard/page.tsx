@@ -88,19 +88,19 @@ function getProblemDescription(checklist: WithId<Checklist>): string | string[] 
 
 export default function Dashboard() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
-    () => (firestore && user?.role === 'admin' ? collection(firestore, 'vehicles') : null),
-    [firestore, user]
+    () => (firestore && !isUserLoading && user?.role === 'admin' ? collection(firestore, 'vehicles') : null),
+    [firestore, user, isUserLoading]
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
 
   const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || user?.role !== 'admin') return null;
+    if (!firestore || isUserLoading || user?.role !== 'admin') return null;
     return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
-  }, [firestore, user]);
+  }, [firestore, user, isUserLoading]);
 
   const { data: recentChecklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);

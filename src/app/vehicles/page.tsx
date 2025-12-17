@@ -127,7 +127,7 @@ function VehicleCardSkeleton() {
 
 export default function VehiclesPage() {
   const { firestore } = useFirebase();
-  const { user } = useAuth();
+  const { user, isUserLoading: isAuthLoading } = useAuth();
 
   const vehiclesQuery = useMemoFirebase(
     () =>
@@ -141,26 +141,28 @@ export default function VehiclesPage() {
 
   const checklistsQuery = useMemoFirebase(
     () =>
-      firestore && user
+      firestore && !isAuthLoading && user?.role === 'admin'
         ? query(collection(firestore, 'checklists'), orderBy('date', 'desc'))
         : null,
-    [firestore, user]
+    [firestore, user, isAuthLoading]
   );
   const { data: checklists, isLoading: isLoadingChecklists } =
     useCollection<Checklist>(checklistsQuery);
     
-  const isLoading = isLoadingVehicles || isLoadingChecklists;
+  const isLoading = isLoadingVehicles || isAuthLoading;
 
   return (
     <div className="mx-auto w-full max-w-7xl flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Frota de Veículos</h1>
-        <Button asChild className='w-full sm:w-auto'>
-          <Link href="/vehicles/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Cadastrar Veículo
-          </Link>
-        </Button>
+        {user?.role === 'admin' && (
+          <Button asChild className='w-full sm:w-auto'>
+            <Link href="/vehicles/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Cadastrar Veículo
+            </Link>
+          </Button>
+        )}
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading
