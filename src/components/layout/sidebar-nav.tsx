@@ -33,8 +33,24 @@ export function SidebarNav() {
   
   const isReportsActive = pathname.startsWith('/reports');
 
-  const renderMenuItems = () => {
-    return (
+  return (
+    <>
+      <SidebarHeader className="border-b">
+        <div className="flex items-center gap-3">
+          <Truck className="h-8 w-8 text-primary" />
+          <div
+            className={cn(
+              'transition-opacity duration-200 whitespace-nowrap',
+              open ? 'opacity-100' : 'opacity-0'
+            )}
+          >
+            <h2 className="font-semibold text-lg text-sidebar-foreground">
+              Rota Certa
+            </h2>
+          </div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
@@ -96,28 +112,6 @@ export function SidebarNav() {
               </Collapsible>
           </SidebarMenuItem>
       </SidebarMenu>
-    );
-  }
-
-  return (
-    <>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3">
-          <Truck className="h-8 w-8 text-primary" />
-          <div
-            className={cn(
-              'transition-opacity duration-200 whitespace-nowrap',
-              open ? 'opacity-100' : 'opacity-0'
-            )}
-          >
-            <h2 className="font-semibold text-lg text-sidebar-foreground">
-              Rota Certa
-            </h2>
-          </div>
-        </div>
-      </SidebarHeader>
-      <SidebarContent className="p-2">
-        {renderMenuItems()}
       </SidebarContent>
       <Separator className="my-2 bg-sidebar-border" />
       <SidebarFooter className="p-2">

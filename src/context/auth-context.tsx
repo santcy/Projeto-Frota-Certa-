@@ -12,7 +12,6 @@ export interface AppUser {
   name: string | null;
   email: string | null;
   phoneNumber: string | null;
-  role: UserRole;
   firebaseUser: FirebaseUser;
 }
 
@@ -41,7 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: userProfile.name || firebaseUser.displayName,
       email: userProfile.email || firebaseUser.email,
       phoneNumber: userProfile.phoneNumber,
-      role: userProfile.userType,
       firebaseUser,
     };
   }, [firebaseUser, userProfile]);
