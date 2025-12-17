@@ -82,12 +82,12 @@ export function SidebarNav() {
                                     <Link href="/reports/heavy">Histórico Pesado</Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuItem>
-                            <SidebarMenuItem>
+                             <SidebarMenuItem>
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
                                     <Link href="/reports/light/unified">Unificado Leve</Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuItem>
-                            <SidebarMenuItem>
+                             <SidebarMenuItem>
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
                                     <Link href="/reports/heavy/unified">Unificado Pesado</Link>
                                 </SidebarMenuSubButton>
