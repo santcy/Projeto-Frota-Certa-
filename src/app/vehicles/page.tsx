@@ -11,8 +11,8 @@ import {
   WithId,
 } from '@/firebase';
 import { collection, orderBy, query } from 'firebase/firestore';
-import type { Vehicle, Checklist, VehicleStatus } from '@/lib/types';
-import { ArrowRight, Fuel, Gauge, User, PlusCircle } from 'lucide-react';
+import type { Vehicle, VehicleStatus } from '@/lib/types';
+import { ArrowRight, Fuel, Gauge, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/auth-context';
@@ -32,10 +32,8 @@ function getStatusVariant(status?: VehicleStatus) {
 
 function VehicleCard({
   vehicle,
-  lastChecklist,
 }: {
   vehicle: WithId<Vehicle>;
-  lastChecklist?: WithId<Checklist>;
 }) {
   return (
     <Card className="flex flex-col overflow-hidden">
@@ -58,10 +56,6 @@ function VehicleCard({
         </div>
         <p className="text-sm text-muted-foreground">{vehicle.model}</p>
         <div className="mt-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span>{lastChecklist?.driverName || 'N/A'}</span>
-          </div>
           <div className="flex items-center gap-2 text-sm">
             <Gauge className="h-4 w-4 text-muted-foreground" />
             <span>{vehicle.odometer.toLocaleString('pt-BR')} km</span>
@@ -138,16 +132,6 @@ export default function VehiclesPage() {
   );
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>(vehiclesQuery);
-
-  const checklistsQuery = useMemoFirebase(
-    () =>
-      firestore && !isAuthLoading && user?.role === 'admin'
-        ? query(collection(firestore, 'checklists'), orderBy('date', 'desc'))
-        : null,
-    [firestore, user, isAuthLoading]
-  );
-  const { data: checklists, isLoading: isLoadingChecklists } =
-    useCollection<Checklist>(checklistsQuery);
     
   const isLoading = isLoadingVehicles || isAuthLoading;
 
@@ -170,14 +154,10 @@ export default function VehiclesPage() {
               <VehicleCardSkeleton key={i} />
             ))
           : vehicles?.map((vehicle) => {
-              const lastChecklist = checklists?.find(
-                (c) => c.vehicleId === vehicle.id
-              );
               return (
                 <VehicleCard
                   key={vehicle.id}
                   vehicle={vehicle}
-                  lastChecklist={lastChecklist}
                 />
               );
             })}
