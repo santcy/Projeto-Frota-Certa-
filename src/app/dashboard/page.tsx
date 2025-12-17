@@ -69,7 +69,7 @@ const allItemsMap = new Map(
 
 const issueStatuses: string[] = ['issue', 'Avariado', 'Incompleto', 'Desgastado'];
 
-function getProblemDescription(checklist: WithId<Checklist>): string {
+function getProblemDescription(checklist: WithId<Checklist>): string | string[] {
   if (!checklist.items) {
     return checklist.notes || 'Problema reportado no checklist.';
   }
@@ -79,12 +79,7 @@ function getProblemDescription(checklist: WithId<Checklist>): string {
     .map(([itemId, _]) => allItemsMap.get(itemId) || itemId);
 
   if (problemItems.length > 0) {
-    const firstTwo = problemItems.slice(0, 2).join(', ');
-    const remaining = problemItems.length - 2;
-    if (remaining > 0) {
-        return `${firstTwo} e mais ${remaining}...`;
-    }
-    return firstTwo;
+    return problemItems;
   }
   
   return checklist.notes || 'Problema reportado no checklist.';
@@ -187,6 +182,7 @@ export default function Dashboard() {
                 ) : recentAlerts && recentAlerts.length > 0 ? (
                   recentAlerts.map((alert) => {
                     const vehicle = vehicles?.find((v) => v.id === alert.vehicleId);
+                    const problemDescription = getProblemDescription(alert);
                     return (
                       <TableRow key={alert.id}>
                         <TableCell className="font-medium">
@@ -197,7 +193,15 @@ export default function Dashboard() {
                           {alert.date.toDate().toLocaleDateString('pt-BR')}
                         </TableCell>
                         <TableCell className="text-destructive">
-                          {getProblemDescription(alert)}
+                          {Array.isArray(problemDescription) ? (
+                            <ul className="list-disc list-inside">
+                              {problemDescription.map((item, index) => (
+                                <li key={index}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            problemDescription
+                          )}
                         </TableCell>
                       </TableRow>
                     );
