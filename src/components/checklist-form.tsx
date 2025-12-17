@@ -96,11 +96,6 @@ const formSchema = z.object({
   trunkPhotoUrl: z.string().url('É obrigatório tirar a foto da mala.'),
   items: z.object(lightChecklistItemsSchema),
   notes: z.string().optional(),
-  maintenanceRequests: z.array(z.object({
-    itemId: z.string(),
-    itemName: z.string(),
-    quantity: z.coerce.number().min(1, 'A quantidade deve ser pelo menos 1.'),
-  })).optional(),
 });
 
 
@@ -242,39 +237,8 @@ export function ChecklistForm() {
       driverName: user?.name || '',
       items: defaultItems,
       notes: '',
-      maintenanceRequests: [],
     },
   });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "maintenanceRequests",
-  });
-
-  const watchedItems = form.watch('items');
-
-  useEffect(() => {
-    const currentRequests = form.getValues('maintenanceRequests') || [];
-    const requestedItemIds = new Set(currentRequests.map(req => req.itemId));
-
-    Object.entries(watchedItems).forEach(([itemId, status]) => {
-      const hasIssue = issueStatuses.includes(String(status));
-      const alreadyRequested = requestedItemIds.has(itemId);
-
-      if (hasIssue && !alreadyRequested) {
-        append({
-          itemId,
-          itemName: allItemsMap.get(itemId) || 'Item desconhecido',
-          quantity: 1,
-        });
-      } else if (!hasIssue && alreadyRequested) {
-        const indexToRemove = currentRequests.findIndex(req => req.itemId === itemId);
-        if (indexToRemove > -1) {
-          remove(indexToRemove);
-        }
-      }
-    });
-  }, [watchedItems, append, remove, form]);
 
   const photoFields: { key: PhotoKey; label: string }[] = [
     { key: 'fuelLevelPhotoUrl', label: 'Nível de Combustível' },
@@ -317,8 +281,6 @@ export function ChecklistForm() {
         date: serverTimestamp(),
         checklistType: 'leve' as 'pesada' | 'leve'
       };
-      // We don't want to save maintenanceRequests in the checklist document
-      delete (newChecklist as any).maintenanceRequests;
 
       batch.set(checklistRef, newChecklist);
 
@@ -331,27 +293,30 @@ export function ChecklistForm() {
       };
       batch.update(vehicleRef, vehicleUpdateData);
 
-      // Create maintenance requests
-      if (data.maintenanceRequests) {
-        for (const request of data.maintenanceRequests) {
-            const requestRef = doc(collection(firestore, 'maintenanceRequests'));
-            const reportedStatus = data.items[request.itemId];
+      // Logic to create maintenance requests if any item has an issue
+      const itemsWithIssues = Object.entries(data.items)
+        .filter(([_, status]) => issueStatuses.includes(String(status)));
 
-            batch.set(requestRef, {
-                id: requestRef.id,
-                vehicleId: data.vehicleId,
-                checklistId: checklistRef.id,
-                itemId: request.itemId,
-                itemName: request.itemName,
-                quantity: request.quantity,
-                reportedStatus: String(reportedStatus),
-                requestStatus: 'Pendente',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                driverName: data.driverName,
-                vehiclePlate: vehicle.plate,
-                vehicleModel: vehicle.model,
-            });
+      if (itemsWithIssues.length > 0) {
+        for (const [itemId, reportedStatus] of itemsWithIssues) {
+          const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+          const itemName = allItemsMap.get(itemId) || 'Item desconhecido';
+          
+          batch.set(requestRef, {
+            id: requestRef.id,
+            vehicleId: data.vehicleId,
+            checklistId: checklistRef.id,
+            itemId: itemId,
+            itemName: itemName,
+            quantity: 1, // Default quantity to 1
+            reportedStatus: String(reportedStatus),
+            requestStatus: 'Pendente',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            driverName: data.driverName,
+            vehiclePlate: vehicle.plate,
+            vehicleModel: vehicle.model,
+          });
         }
       }
 
@@ -378,7 +343,6 @@ export function ChecklistForm() {
         frontPhotoUrl: undefined,
         backPhotoUrl: undefined,
         trunkPhotoUrl: undefined,
-        maintenanceRequests: [],
       });
 
     } catch (error) {
@@ -589,38 +553,6 @@ export function ChecklistForm() {
           )}
         </Accordion>
 
-        {fields.length > 0 && (
-          <>
-            <Separator />
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wrench className="h-5 w-5" />
-                  Solicitação de Peças
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {fields.map((field, index) => (
-                  <FormField
-                    key={field.id}
-                    control={form.control}
-                    name={`maintenanceRequests.${index}.quantity`}
-                    render={({ field: qtyField }) => (
-                      <FormItem className="rounded-md border p-4">
-                        <FormLabel>{field.itemName}</FormLabel>
-                        <FormControl>
-                           <Input type="number" placeholder="Qtd." {...qtyField} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          </>
-        )}
-
         <Separator />
 
         <FormField
@@ -664,5 +596,3 @@ export function ChecklistForm() {
     </Form>
   );
 }
-
-    

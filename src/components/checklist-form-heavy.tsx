@@ -89,11 +89,6 @@ const formSchema = z.object({
   backPhotoUrl: z.string().url('É obrigatório tirar a foto de trás.'),
   items: z.object(heavyChecklistItemsSchema),
   notes: z.string().optional(),
-  maintenanceRequests: z.array(z.object({
-    itemId: z.string(),
-    itemName: z.string(),
-    quantity: z.coerce.number().min(1, 'A quantidade deve ser pelo menos 1.'),
-  })).optional(),
 });
 
 
@@ -234,40 +229,8 @@ export function ChecklistFormHeavy() {
       items: defaultItems,
       notes: '',
       fuelLevelOut: 100,
-      maintenanceRequests: [],
     },
   });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "maintenanceRequests",
-  });
-
-  const watchedItems = form.watch('items');
-
-  useEffect(() => {
-    const currentRequests = form.getValues('maintenanceRequests') || [];
-    const requestedItemIds = new Set(currentRequests.map(req => req.itemId));
-
-    Object.entries(watchedItems).forEach(([itemId, status]) => {
-      const hasIssue = issueStatuses.includes(String(status));
-      const alreadyRequested = requestedItemIds.has(itemId);
-
-      if (hasIssue && !alreadyRequested) {
-        append({
-          itemId,
-          itemName: allItemsMap.get(itemId) || 'Item desconhecido',
-          quantity: 1,
-        });
-      } else if (!hasIssue && alreadyRequested) {
-        const indexToRemove = currentRequests.findIndex(req => req.itemId === itemId);
-        if (indexToRemove > -1) {
-          remove(indexToRemove);
-        }
-      }
-    });
-  }, [watchedItems, append, remove, form]);
-
 
   const photoFields: { key: PhotoKey; label: string }[] = [
     { key: 'dashboardPhotoUrl', label: 'Painel (Combustível 1)' },
@@ -308,7 +271,6 @@ export function ChecklistFormHeavy() {
         date: serverTimestamp(),
         checklistType: 'pesada' as 'pesada' | 'leve'
       };
-      delete (newChecklist as any).maintenanceRequests;
       batch.set(checklistRef, newChecklist);
 
       const hasIssues = Object.values(data.items).some(status => issueStatuses.includes(status));
@@ -321,18 +283,21 @@ export function ChecklistFormHeavy() {
       };
       batch.update(vehicleRef, vehicleUpdateData);
 
-      if (data.maintenanceRequests) {
-        for (const request of data.maintenanceRequests) {
+      const itemsWithIssues = Object.entries(data.items)
+      .filter(([_, status]) => issueStatuses.includes(String(status)));
+
+      if (itemsWithIssues.length > 0) {
+        for (const [itemId, reportedStatus] of itemsWithIssues) {
             const requestRef = doc(collection(firestore, 'maintenanceRequests'));
-            const reportedStatus = data.items[request.itemId];
+            const itemName = allItemsMap.get(itemId) || 'Item desconhecido';
 
             batch.set(requestRef, {
                 id: requestRef.id,
                 vehicleId: data.vehicleId,
                 checklistId: checklistRef.id,
-                itemId: request.itemId,
-                itemName: request.itemName,
-                quantity: request.quantity,
+                itemId: itemId,
+                itemName: itemName,
+                quantity: 1, // Default to 1
                 reportedStatus: String(reportedStatus),
                 requestStatus: 'Pendente',
                 createdAt: serverTimestamp(),
@@ -366,7 +331,6 @@ export function ChecklistFormHeavy() {
         rightSidePhotoUrl: undefined,
         frontPhotoUrl: undefined,
         backPhotoUrl: undefined,
-        maintenanceRequests: [],
       });
 
     } catch (error) {
@@ -624,38 +588,6 @@ export function ChecklistFormHeavy() {
           )}
         </Accordion>
 
-        {fields.length > 0 && (
-          <>
-            <Separator />
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wrench className="h-5 w-5" />
-                  Solicitação de Peças
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {fields.map((field, index) => (
-                  <FormField
-                    key={field.id}
-                    control={form.control}
-                    name={`maintenanceRequests.${index}.quantity`}
-                    render={({ field: qtyField }) => (
-                      <FormItem className="rounded-md border p-4">
-                        <FormLabel>{field.itemName}</FormLabel>
-                        <FormControl>
-                           <Input type="number" placeholder="Qtd." {...qtyField} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          </>
-        )}
-
         <Separator />
 
         <FormField
@@ -699,5 +631,3 @@ export function ChecklistFormHeavy() {
     </Form>
   );
 }
-
-    
