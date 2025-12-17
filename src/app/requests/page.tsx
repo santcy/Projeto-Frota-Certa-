@@ -75,6 +75,7 @@ function RequestsPageSkeleton() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Item</TableHead>
+                                    <TableHead>Qtd.</TableHead>
                                     <TableHead>Veículo</TableHead>
                                     <TableHead>Data</TableHead>
                                     <TableHead>Motorista</TableHead>
@@ -87,6 +88,9 @@ function RequestsPageSkeleton() {
                                 <TableRow key={i}>
                                     <TableCell>
                                     <Skeleton className="h-5 w-32" />
+                                    </TableCell>
+                                     <TableCell>
+                                    <Skeleton className="h-5 w-12" />
                                     </TableCell>
                                     <TableCell>
                                     <Skeleton className="h-5 w-24" />
