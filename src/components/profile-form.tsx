@@ -151,7 +151,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     defaultValues: {
       name: user.name || '',
       email: user.email || '',
-      phoneNumber: user.phoneNumber || '',
+      phoneNumber: user.firebaseUser.phoneNumber || '',
     },
   });
 
@@ -159,7 +159,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     form.reset({
       name: user.name || '',
       email: user.email || '',
-      phoneNumber: user.phoneNumber || '',
+      phoneNumber: user.firebaseUser.phoneNumber || '',
     });
   }, [user, form]);
   
@@ -322,5 +322,3 @@ export function ProfileForm({ user }: ProfileFormProps) {
     </Form>
   );
 }
-
-    

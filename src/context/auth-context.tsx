@@ -1,15 +1,12 @@
 'use client';
 import { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useUser, useDoc, useMemoFirebase } from '@/firebase'; // Using the hook from Firebase setup
+import { useUser } from '@/firebase'; // Using the hook from Firebase setup
 import type { User as FirebaseUser } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
 
 export interface AppUser {
   uid: string;
   name: string | null;
   email: string | null;
-  phoneNumber: string | null;
   firebaseUser: FirebaseUser;
 }
 
@@ -22,31 +19,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user: firebaseUser, isUserLoading: isAuthLoading } = useUser();
-  const { firestore } = useFirebase();
-
-  const userDocRef = useMemoFirebase(
-    () => (firestore && firebaseUser?.uid ? doc(firestore, 'users', firebaseUser.uid) : null),
-    [firestore, firebaseUser?.uid]
-  );
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ name: string, email: string, phoneNumber: string }>(userDocRef);
 
   const user = useMemo<AppUser | null>(() => {
-    if (!firebaseUser || !userProfile) return null;
+    if (!firebaseUser) return null;
 
+    // Simplified user object, does not depend on Firestore profile anymore.
     return {
       uid: firebaseUser.uid,
-      name: userProfile.name || firebaseUser.displayName,
-      email: userProfile.email || firebaseUser.email,
-      phoneNumber: userProfile.phoneNumber,
+      name: firebaseUser.displayName,
+      email: firebaseUser.email,
       firebaseUser,
     };
-  }, [firebaseUser, userProfile]);
-
-  const isUserLoading = isAuthLoading || (!!firebaseUser && isProfileLoading);
+  }, [firebaseUser]);
 
   const value = {
     user,
-    isUserLoading,
+    isUserLoading: isAuthLoading,
   };
 
   return (
