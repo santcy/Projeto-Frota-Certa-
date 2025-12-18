@@ -3,31 +3,33 @@ service cloud.firestore {
   match /databases/{database}/documents {
   
     function isAdmin() {
+      // Admins have a 'userType' field set to 'admin' in their user document.
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
-    // Users can read/write their own profile, admins can read any profile
+    // Users can read/write their own profile. Admins can read any profile.
     match /users/{userId} {
       allow read: if request.auth.uid == userId || isAdmin();
       allow write: if request.auth.uid == userId;
     }
 
-    // Admins can read/write all vehicles.
-    // Logged in users can read all vehicles (for selection in forms).
+    // Any authenticated user can read the vehicle list (e.g., for forms).
+    // Only admins can create, update, or delete vehicles.
     match /vehicles/{vehicleId} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
-    // Admins can read all checklists.
-    // Drivers can create checklists and read/write their own.
+    // Drivers can create checklists for themselves.
+    // Drivers can only read/update checklists they created.
+    // Admins can read/list all checklists.
     match /checklists/{checklistId} {
-      allow read, write: if request.auth.uid == resource.data.userId || isAdmin();
       allow create: if request.auth.uid == request.resource.data.userId;
+      allow read, write: if request.auth.uid == resource.data.userId || isAdmin();
       allow list: if isAdmin();
     }
     
-    // Admins can manage all maintenance requests.
+    // Only admins can manage maintenance requests.
     match /maintenanceRequests/{requestId} {
       allow read, write, create, list: if isAdmin();
     }
