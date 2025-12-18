@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   collection,
   query,
-  where,
   onSnapshot,
   Query,
   DocumentData,
@@ -28,36 +27,28 @@ export function useCollection<T = any>(
   collectionName: string,
   ...queryConstraints: QueryConstraint[]
 ): UseCollectionResult<T> {
-  const { user, loading } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
   const [data, setData] = useState<WithId<T>[] | null>([]);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Memoize the query constraints array to stabilize the useEffect dependency.
+  const constraintsString = useMemo(() => queryConstraints.map(c => c.type).join(','), [queryConstraints]);
+
   useEffect(() => {
-    if (loading) {
+    if (isAuthLoading) {
       setIsLoading(true);
       return;
     }
-
+    
+    // Although rules are open, it's good practice to wait for authentication.
     if (!user) {
-      setData([]);
-      setIsLoading(false);
-      return;
+        setIsLoading(false);
+        setData([]);
+        return;
     }
 
-    let q: Query;
-    const baseCollection = collection(db, collectionName);
-    
-    const constraints: QueryConstraint[] = [...queryConstraints];
-
-    // If user is a driver, add a constraint to fetch only their own checklists.
-    // This logic is specific and should be handled carefully.
-    if (collectionName === 'checklists' && user.role === 'driver') {
-      constraints.push(where('userId', '==', user.uid));
-    }
-    
-    q = query(baseCollection, ...constraints);
-
+    const q = query(collection(db, collectionName), ...queryConstraints);
 
     const unsubscribe = onSnapshot(
       q,
@@ -84,7 +75,8 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [collectionName, user, loading, ...queryConstraints]);
+  // We use a string representation of constraints because the array itself is a new object on each render.
+  }, [collectionName, user, isAuthLoading, constraintsString]);
 
   return { data, error, isLoading };
 }
