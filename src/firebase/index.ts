@@ -5,6 +5,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
+import { useMemo, type DependencyList } from 'react';
 
 // Safely initialize Firebase and export the singleton instances.
 // This function handles the singleton pattern to avoid re-initialization.
@@ -32,3 +33,20 @@ export * from './firestore/use-doc';
 export * from './non-blocking-updates';
 export * from './errors';
 export * from './error-emitter';
+
+// This hook is no longer user-specific, so it can live here.
+export function useUser() {
+    const { user, isUserLoading, userError } = useFirebase();
+    return { user, isUserLoading, userError };
+}
+
+type MemoFirebase <T> = T & {__memo?: boolean};
+
+export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
+  const memoized = useMemo(factory, deps);
+  
+  if(typeof memoized !== 'object' || memoized === null) return memoized;
+  (memoized as MemoFirebase<T>).__memo = true;
+  
+  return memoized;
+}

@@ -14,8 +14,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useCollection, useFirebase, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, where, orderBy, QueryConstraint } from 'firebase/firestore';
+import { useCollection, WithId } from '@/firebase';
+import { where, orderBy } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { CHECKLIST_ITEMS_SECTIONS_LEVE, CHECKLIST_ITEMS_LEVE } from '@/lib/types';
+import { useAuth } from '@/context/auth-context';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -30,30 +31,34 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 
 export default function ReportsLightPage() {
-  const { firestore } = useFirebase();
-
-  const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    
-    const queryConstraints: QueryConstraint[] = [
-      where('checklistType', '==', 'leve'),
-      orderBy('date', 'desc')
-    ];
-    
-    return query(collection(firestore, 'checklists'), ...queryConstraints);
-  }, [firestore]);
+  const { user } = useAuth();
 
   const { data: checklists, isLoading: isLoadingChecklists } =
-    useCollection<Checklist>(checklistsQuery);
+    useCollection<Checklist>(
+      'checklists', 
+      where('checklistType', '==', 'leve'),
+      orderBy('date', 'desc')
+    );
 
-  const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
-  );
   const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+    useCollection<Vehicle>('vehicles');
 
   const isLoading = isLoadingChecklists || isLoadingVehicles;
+
+  if (user && user.role === 'driver') {
+    return (
+      <div className="mx-auto w-full max-w-7xl">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Acesso Negado</CardTitle>
+                  <CardContent>
+                      <p className="mt-4">Você não tem permissão para acessar esta página.</p>
+                  </CardContent>
+              </CardHeader>
+          </Card>
+      </div>
+    )
+  }
 
   const handleDownloadChecklist = (checklist: WithId<Checklist>, vehicle: WithId<Vehicle>) => {
     const doc = new jsPDF() as jsPDFWithAutoTable;

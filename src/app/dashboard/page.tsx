@@ -16,14 +16,13 @@ import {
 import { AlertTriangle, Fuel, Truck, Wrench } from 'lucide-react';
 import {
   useCollection,
-  useFirebase,
-  useMemoFirebase,
   WithId,
 } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { orderBy, limit } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_LEVE } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/auth-context';
 
 function DashboardCard({
   title,
@@ -86,22 +85,28 @@ function getProblemDescription(checklist: WithId<Checklist>): string | string[] 
 }
 
 export default function Dashboard() {
-  const { firestore } = useFirebase();
+  const { user } = useAuth();
+  const { data: vehicles, isLoading: isLoadingVehicles } = useCollection<Vehicle>('vehicles');
+  const { data: recentChecklists, isLoading: isLoadingChecklists } = useCollection<Checklist>('checklists', orderBy('date', 'desc'), limit(50));
 
-  const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
-  );
-  const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+  // Show skeleton if user role is not determined yet
+  const isLoading = isLoadingVehicles || isLoadingChecklists || !user;
 
-  const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'checklists'), orderBy('date', 'desc'), limit(50));
-  }, [firestore]);
-
-  const { data: recentChecklists, isLoading: isLoadingChecklists } =
-    useCollection<Checklist>(checklistsQuery);
+  // Do not show for drivers
+  if (user && user.role === 'driver') {
+      return (
+          <div className="mx-auto w-full max-w-7xl">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Bem-vindo, {user.name}!</CardTitle>
+                      <CardContent>
+                          <p className="mt-4">Use o menu para navegar e registrar um novo checklist.</p>
+                      </CardContent>
+                  </CardHeader>
+              </Card>
+          </div>
+      )
+  }
 
 
   const vehiclesWithProblems =
@@ -129,28 +134,28 @@ export default function Dashboard() {
           icon={<Truck className="h-4 w-4 text-muted-foreground" />}
           value={vehicles?.length ?? 0}
           description="veículos na frota"
-          isLoading={isLoadingVehicles}
+          isLoading={isLoading}
         />
         <DashboardCard
           title="Com Problemas"
           icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
           value={vehiclesWithProblems}
           description="requerem atenção imediata"
-          isLoading={isLoadingVehicles}
+          isLoading={isLoading}
         />
         <DashboardCard
           title="Em Manutenção"
           icon={<Wrench className="h-4 w-4 text-muted-foreground" />}
           value={vehiclesInMaintenance}
           description="veículos atualmente na oficina"
-          isLoading={isLoadingVehicles}
+          isLoading={isLoading}
         />
         <DashboardCard
           title="Combustível Baixo"
           icon={<Fuel className="h-4 w-4 text-muted-foreground" />}
           value={lowFuelVehicles}
           description="veículos com menos de 25%"
-          isLoading={isLoadingVehicles}
+          isLoading={isLoading}
         />
       </div>
 
@@ -170,7 +175,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingChecklists ? (
+                {isLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>

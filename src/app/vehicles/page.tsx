@@ -6,11 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   useCollection,
-  useFirebase,
-  useMemoFirebase,
   WithId,
 } from '@/firebase';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { orderBy } from 'firebase/firestore';
 import type { Vehicle, VehicleStatus } from '@/lib/types';
 import { ArrowRight, Fuel, Gauge, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -120,18 +118,10 @@ function VehicleCardSkeleton() {
 }
 
 export default function VehiclesPage() {
-  const { firestore } = useFirebase();
   const { user, isUserLoading: isAuthLoading } = useAuth();
 
-  const vehiclesQuery = useMemoFirebase(
-    () =>
-      firestore && user
-        ? query(collection(firestore, 'vehicles'), orderBy('plate', 'asc'))
-        : null,
-    [firestore, user]
-  );
   const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+    useCollection<Vehicle>('vehicles', orderBy('plate', 'asc'));
     
   const isLoading = isLoadingVehicles || isAuthLoading;
 
@@ -139,12 +129,14 @@ export default function VehiclesPage() {
     <div className="mx-auto w-full max-w-7xl flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Frota de Veículos</h1>
-        <Button asChild className='w-full sm:w-auto'>
-          <Link href="/vehicles/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Cadastrar Veículo
-          </Link>
-        </Button>
+        {user?.role === 'admin' && (
+          <Button asChild className='w-full sm:w-auto'>
+            <Link href="/vehicles/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Cadastrar Veículo
+            </Link>
+          </Button>
+        )}
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading

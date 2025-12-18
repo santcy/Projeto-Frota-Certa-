@@ -27,16 +27,16 @@ import {
   useDoc,
   useCollection,
   useFirebase,
-  useMemoFirebase,
   WithId,
 } from '@/firebase';
-import { doc, collection, query, where, orderBy, QueryConstraint } from 'firebase/firestore';
+import { doc, where, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Link from 'next/link';
-import React from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
+import { useAuth } from '@/context/auth-context';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -90,30 +90,18 @@ function VehicleDetailsSkeleton() {
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const { firestore } = useFirebase();
-  const router = useRouter();
+  const { user } = useAuth();
 
-  const vehicleRef = useMemoFirebase(
+  const vehicleRef = useMemo(
     () => (firestore ? doc(firestore, 'vehicles', id) : null),
     [firestore, id]
   );
   const { data: vehicle, isLoading: isLoadingVehicle } =
     useDoc<Vehicle>(vehicleRef);
 
-  const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore || !id) {
-      return null;
-    }
-
-    const queryConstraints: QueryConstraint[] = [
-      where('vehicleId', '==', id),
-      orderBy('date', 'desc'),
-    ];
-
-    return query(collection(firestore, 'checklists'), ...queryConstraints);
-  }, [firestore, id]);
   
   const { data: vehicleChecklists, isLoading: isLoadingChecklists } =
-    useCollection<Checklist>(checklistsQuery);
+    useCollection<Checklist>('checklists', where('vehicleId', '==', id), orderBy('date', 'desc'));
 
   const handleDownloadChecklist = (checklist: WithId<Checklist>, vehicle: WithId<Vehicle>) => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
@@ -242,12 +230,14 @@ export default function VehicleDetailPage({ params }: { params: { id: string } }
           </h1>
           <p className="text-muted-foreground">{vehicle.model}</p>
         </div>
-        <Button asChild className='w-full sm:w-auto'>
-          <Link href={`/vehicles/${vehicle.id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar Veículo
-          </Link>
-        </Button>
+        {user?.role === 'admin' && (
+          <Button asChild className='w-full sm:w-auto'>
+            <Link href={`/vehicles/${vehicle.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar Veículo
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>

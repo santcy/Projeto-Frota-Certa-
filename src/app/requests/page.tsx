@@ -25,15 +25,15 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal } from 'lucide-react';
 import {
   useCollection,
-  useFirebase,
-  useMemoFirebase,
   updateDocumentNonBlocking,
   WithId,
 } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import type { MaintenanceRequest, MaintenanceRequestStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useAuth } from '@/context/auth-context';
+import { useFirebase } from '@/firebase';
 
 const statusVariants: Record<
   MaintenanceRequestStatus,
@@ -119,20 +119,13 @@ function RequestsPageSkeleton() {
 
 export default function RequestedPartsPage() {
   const { firestore } = useFirebase();
-
-  const requestsQuery = useMemoFirebase(
-    () => {
-        if (!firestore) return null;
-        return query(
-            collection(firestore, 'maintenanceRequests'),
-            orderBy('createdAt', 'desc')
-        );
-    },
-    [firestore]
-  );
+  const { user } = useAuth();
   
   const { data: requests, isLoading: isLoadingRequests } =
-    useCollection<MaintenanceRequest>(requestsQuery);
+    useCollection<MaintenanceRequest>(
+      'maintenanceRequests',
+      orderBy('createdAt', 'desc')
+    );
     
   const isLoading = isLoadingRequests;
 
@@ -147,6 +140,21 @@ export default function RequestedPartsPage() {
       updatedAt: serverTimestamp(),
     });
   };
+
+  if (user && user.role === 'driver') {
+    return (
+      <div className="mx-auto w-full max-w-7xl">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Acesso Negado</CardTitle>
+                  <CardContent>
+                      <p className="mt-4">Você não tem permissão para acessar esta página.</p>
+                  </CardContent>
+              </CardHeader>
+          </Card>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (

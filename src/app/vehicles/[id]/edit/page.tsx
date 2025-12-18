@@ -2,7 +2,7 @@
 
 import { VehicleForm } from '@/components/vehicle-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { notFound } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -54,11 +54,26 @@ export default function EditVehiclePage({ params }: { params: { id: string } }) 
   const { firestore } = useFirebase();
   const { user } = useAuth();
   
-  const vehicleRef = useMemoFirebase(
+  const vehicleRef = useMemo(
     () => (firestore && id ? doc(firestore, 'vehicles', id) : null),
     [firestore, id]
   );
   const { data: vehicle, isLoading } = useDoc<Vehicle>(vehicleRef);
+
+  if (user && user.role === 'driver') {
+    return (
+      <div className="mx-auto w-full max-w-7xl">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Acesso Negado</CardTitle>
+                  <CardContent>
+                      <p className="mt-4">Você não tem permissão para editar veículos.</p>
+                  </CardContent>
+              </CardHeader>
+          </Card>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return <EditVehicleSkeleton />;

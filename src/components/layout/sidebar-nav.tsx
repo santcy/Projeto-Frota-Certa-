@@ -23,10 +23,12 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useAuth } from '@/context/auth-context';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { open } = useSidebar();
+  const { user } = useAuth();
   
   const isReportsActive = pathname.startsWith('/reports');
 
@@ -49,11 +51,13 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
-              <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
-              </SidebarMenuButton>
-          </SidebarMenuItem>
+          {user?.role === 'admin' && (
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
+                <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/vehicles')} tooltip={{ children: 'Veículos' }}>
               <Link href="/vehicles"><Truck /><span>Veículos</span></Link>
@@ -69,45 +73,49 @@ export function SidebarNav() {
               <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
               </SidebarMenuButton>
           </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Solicitações de Manutenção' }}>
-              <Link href="/requests"><Wrench /><span>Solicitações</span></Link>
-              </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-              <Collapsible>
-              <CollapsibleTrigger asChild>
-                  <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
-                  <Archive />
-                  <span>Histórico</span>
-                  </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                  <SidebarMenuSub>
-                      <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
-                              <Link href="/reports/light">Histórico Leve</Link>
-                          </SidebarMenuSubButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
-                              <Link href="/reports/heavy">Histórico Pesado</Link>
-                          </SidebarMenuSubButton>
-                      </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
-                              <Link href="/reports/light/unified">Unificado Leve</Link>
-                          </SidebarMenuSubButton>
-                      </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
-                              <Link href="/reports/heavy/unified">Unificado Pesado</Link>
-                          </SidebarMenuSubButton>
-                      </SidebarMenuItem>
-                  </SidebarMenuSub>
-              </CollapsibleContent>
-              </Collapsible>
-          </SidebarMenuItem>
+           {user?.role === 'admin' && (
+            <>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Solicitações de Manutenção' }}>
+                <Link href="/requests"><Wrench /><span>Solicitações</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                  <Collapsible>
+                  <CollapsibleTrigger asChild>
+                      <SidebarMenuButton isActive={isReportsActive} tooltip={{ children: 'Histórico de Checklists' }}>
+                      <Archive />
+                      <span>Histórico</span>
+                      </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                      <SidebarMenuSub>
+                          <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light') && !pathname.endsWith('unified')}>
+                                  <Link href="/reports/light">Histórico Leve</Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
+                          <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy') && !pathname.endsWith('unified')}>
+                                  <Link href="/reports/heavy">Histórico Pesado</Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
+                            <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/light/unified')}>
+                                  <Link href="/reports/light/unified">Unificado Leve</Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
+                            <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/reports/heavy/unified')}>
+                                  <Link href="/reports/heavy/unified">Unificado Pesado</Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
+                      </SidebarMenuSub>
+                  </CollapsibleContent>
+                  </Collapsible>
+              </SidebarMenuItem>
+            </>
+          )}
       </SidebarMenu>
       </SidebarContent>
       <Separator className="my-2 bg-sidebar-border" />

@@ -14,8 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useCollection, useFirebase, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useCollection, WithId } from '@/firebase';
+import { where } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { CHECKLIST_ITEMS } from '@/lib/types';
+import { useAuth } from '@/context/auth-context';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -42,26 +43,13 @@ type UnifiedReportData = {
 
 
 export default function UnifiedReportHeavyPage() {
-  const { firestore } = useFirebase();
-
-  const checklistsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-
-    const baseQuery = collection(firestore, 'checklists');
-    const queryConstraints = [where('checklistType', '==', 'pesada')];
-    
-    return query(baseQuery, ...queryConstraints);
-  }, [firestore]);
-
+  const { user } = useAuth();
+  
   const { data: checklists, isLoading: isLoadingChecklists } =
-    useCollection<Checklist>(checklistsQuery);
+    useCollection<Checklist>('checklists', where('checklistType', '==', 'pesada'));
 
-  const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
-  );
   const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+    useCollection<Vehicle>('vehicles');
 
   const isLoading = isLoadingChecklists || isLoadingVehicles;
 
@@ -99,6 +87,21 @@ export default function UnifiedReportHeavyPage() {
     }, {} as UnifiedReportData);
   }, [checklists, vehicles]);
   
+  if (user && user.role === 'driver') {
+    return (
+      <div className="mx-auto w-full max-w-7xl">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Acesso Negado</CardTitle>
+                  <CardContent>
+                      <p className="mt-4">Você não tem permissão para acessar esta página.</p>
+                  </CardContent>
+              </CardHeader>
+          </Card>
+      </div>
+    )
+  }
+
   const handleDownload = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
 
