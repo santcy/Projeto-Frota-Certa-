@@ -45,9 +45,6 @@ const signUpSchema = z.object({
     .string()
     .min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
   phoneNumber: z.string().min(10, { message: 'O telefone é obrigatório.'}),
-  userType: z.enum(['admin', 'driver'], {
-    required_error: 'Selecione um tipo de perfil.',
-  }),
 });
 
 const loginSchema = z.object({
@@ -62,7 +59,6 @@ async function createUserProfile(
   firestore: any,
   user: any,
   name: string,
-  userType: 'admin' | 'driver',
   phoneNumber: string
 ) {
   const userRef = doc(firestore, 'users', user.uid);
@@ -71,7 +67,7 @@ async function createUserProfile(
     id: user.uid,
     name: name,
     email: user.email,
-    userType: userType,
+    userType: 'admin', // Default all new users to admin
     phoneNumber: phoneNumber,
   });
 }
@@ -91,7 +87,7 @@ export function AuthForm() {
 
   const signUpForm = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { name: '', email: '', password: '', phoneNumber: '', userType: 'driver' },
+    defaultValues: { name: '', email: '', password: '', phoneNumber: '' },
   });
 
   const handleAuthError = (error: any) => {
@@ -141,8 +137,6 @@ export function AuthForm() {
     }
 
     try {
-      const userType = data.userType;
-
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -150,11 +144,11 @@ export function AuthForm() {
       );
       await updateProfile(userCredential.user, { displayName: data.name });
       
-      await createUserProfile(firestore, userCredential.user, data.name, userType, data.phoneNumber);
+      await createUserProfile(firestore, userCredential.user, data.name, data.phoneNumber);
       
       toast({
         title: 'Conta criada com sucesso!',
-        description: `Seu perfil foi criado como ${userType === 'admin' ? 'Administrador' : 'Motorista'}. Você será redirecionado para o login.`,
+        description: `Seu perfil foi criado como Administrador. Você será redirecionado para o login.`,
       });
       
       setActiveTab('login');
@@ -299,40 +293,6 @@ export function AuthForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={signUpForm.control}
-                  name="userType"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Tipo de Perfil</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-col space-y-1"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="driver" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Motorista
-                            </FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="admin" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Administrador
-                            </FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
                 </Button>
@@ -344,5 +304,3 @@ export function AuthForm() {
     </Tabs>
   );
 }
-
-    
