@@ -23,13 +23,10 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useAuth } from '@/context/auth-context';
-import { Skeleton } from '../ui/skeleton';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { open } = useSidebar();
-  const { user } = useAuth();
   
   const isReportsActive = pathname.startsWith('/reports');
 
