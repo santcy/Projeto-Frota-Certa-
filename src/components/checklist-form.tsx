@@ -1,9 +1,9 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import {
   collection,
   doc,
@@ -44,9 +44,9 @@ import {
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
-import { Check, Send, Camera, RefreshCw, Wrench } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { Check, Send, Camera, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/firebase/auth';
+import { useCollection } from '@/firebase';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 import Image from 'next/image';
 import {
@@ -58,7 +58,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { db } from '@/firebase/config';
 
 const lightChecklistItemsSchema = Object.values(CHECKLIST_ITEMS_LEVE)
   .flat()
@@ -212,15 +212,10 @@ const issueStatuses = ['Avariado', 'issue', 'Incompleto', 'Desgastado'];
 export function ChecklistForm() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { firestore } = useFirebase();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
-  );
   const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+    useCollection<Vehicle>('vehicles');
     
   const defaultItems = Object.values(CHECKLIST_ITEMS_LEVE)
   .flat()
@@ -252,7 +247,7 @@ export function ChecklistForm() {
   ];
 
   async function onSubmit(data: FormValues) {
-    if (!firestore || !user) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -269,9 +264,9 @@ export function ChecklistForm() {
         return;
     }
 
-    const batch = writeBatch(firestore);
+    const batch = writeBatch(db);
     try {
-      const checklistRef = doc(collection(firestore, 'checklists'));
+      const checklistRef = doc(collection(db, 'checklists'));
       
       const newChecklist = {
         ...data,
@@ -285,7 +280,7 @@ export function ChecklistForm() {
       batch.set(checklistRef, newChecklist);
 
       const hasIssues = Object.values(data.items).some(status => issueStatuses.includes(String(status)));
-      const vehicleRef = doc(firestore, 'vehicles', data.vehicleId);
+      const vehicleRef = doc(db, 'vehicles', data.vehicleId);
       const vehicleUpdateData = {
         odometer: data.odometer,
         lastCheck: serverTimestamp(),
@@ -299,7 +294,7 @@ export function ChecklistForm() {
 
       if (itemsWithIssues.length > 0) {
         for (const [itemId, reportedStatus] of itemsWithIssues) {
-          const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+          const requestRef = doc(collection(db, 'maintenanceRequests'));
           const itemName = allItemsMap.get(itemId) || 'Item desconhecido';
           
           batch.set(requestRef, {

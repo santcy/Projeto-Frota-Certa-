@@ -3,7 +3,7 @@
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter } from '@/components/ui/sidebar';
 import { Header } from '@/components/layout/header';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Truck } from 'lucide-react';
@@ -52,9 +52,9 @@ function AppLayoutSkeleton() {
 }
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isUserLoading } = useAuth();
+  const { loading } = useAuth();
 
-  if (isUserLoading) {
+  if (loading) {
     return <AppLayoutSkeleton />;
   }
 

@@ -22,7 +22,7 @@ service cloud.firestore {
     // Admins can read all checklists.
     // Drivers can create checklists and read/write their own.
     match /checklists/{checklistId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth.uid == resource.data.userId || isAdmin();
       allow create: if request.auth.uid == request.resource.data.userId;
       allow list: if isAdmin();
     }

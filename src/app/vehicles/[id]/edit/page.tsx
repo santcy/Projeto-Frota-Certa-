@@ -6,9 +6,10 @@ import { useDoc, useFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { notFound } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 import type { Vehicle } from '@/lib/types';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { db } from '@/firebase/config';
 
 
 function EditVehicleSkeleton() {
@@ -51,12 +52,11 @@ function EditVehicleSkeleton() {
 
 export default function EditVehiclePage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { firestore } = useFirebase();
   const { user } = useAuth();
   
   const vehicleRef = useMemo(
-    () => (firestore && id ? doc(firestore, 'vehicles', id) : null),
-    [firestore, id]
+    () => (id ? doc(db, 'vehicles', id) : null),
+    [id]
   );
   const { data: vehicle, isLoading } = useDoc<Vehicle>(vehicleRef);
 

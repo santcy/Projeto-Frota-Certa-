@@ -32,8 +32,8 @@ import { doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import type { MaintenanceRequest, MaintenanceRequestStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useAuth } from '@/context/auth-context';
-import { useFirebase } from '@/firebase';
+import { useAuth } from '@/firebase/auth';
+import { db } from '@/firebase/config';
 
 const statusVariants: Record<
   MaintenanceRequestStatus,
@@ -118,7 +118,6 @@ function RequestsPageSkeleton() {
 }
 
 export default function RequestedPartsPage() {
-  const { firestore } = useFirebase();
   const { user } = useAuth();
   
   const { data: requests, isLoading: isLoadingRequests } =
@@ -133,8 +132,7 @@ export default function RequestedPartsPage() {
     requestId: string,
     newStatus: MaintenanceRequestStatus
   ) => {
-    if (!firestore) return;
-    const requestRef = doc(firestore, 'maintenanceRequests', requestId);
+    const requestRef = doc(db, 'maintenanceRequests', requestId);
     updateDocumentNonBlocking(requestRef, {
       requestStatus: newStatus,
       updatedAt: serverTimestamp(),

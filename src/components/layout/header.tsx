@@ -11,9 +11,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { LogOut, User as UserIcon } from 'lucide-react'; // Renamed to avoid conflict
-import { useAuth } from '@/context/auth-context';
-import { useAuth as useFirebaseAuth } from '@/firebase'; // Firebase auth instance
+import { LogOut, User as UserIcon } from 'lucide-react';
+import { useAuth } from '@/firebase/auth'; 
+import { auth as firebaseAuthInstance } from '@/firebase/config';
 import { Skeleton } from '@/components/ui/skeleton';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -21,12 +21,11 @@ import Link from 'next/link';
 
 export function Header() {
   const { user } = useAuth();
-  const auth = useFirebaseAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await signOut(firebaseAuthInstance);
     } catch(e) {
       // ignore
     }
@@ -43,7 +42,7 @@ export function Header() {
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
               <AvatarImage
-                src={user?.firebaseUser.photoURL || `https://avatar.vercel.sh/guest.png`}
+                src={user?.photoURL || `https://avatar.vercel.sh/guest.png`}
                 alt={user?.name || 'Usuário'}
                 data-ai-hint="person portrait"
               />

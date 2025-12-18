@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { auth, db } from '@/firebase/config';
 import {
   Card,
   CardContent,
@@ -33,8 +33,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { setDoc, doc, getDocs, collection } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { setDoc, doc } from 'firebase/firestore';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
@@ -45,6 +44,7 @@ const signUpSchema = z.object({
     .string()
     .min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
   phoneNumber: z.string().min(10, { message: 'O telefone é obrigatório.'}),
+  userType: z.enum(['admin', 'driver'], { required_error: 'Selecione um tipo de perfil.'}),
 });
 
 const loginSchema = z.object({
@@ -56,18 +56,18 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 async function createUserProfile(
-  firestore: any,
   user: any,
   name: string,
-  phoneNumber: string
+  phoneNumber: string,
+  userType: 'admin' | 'driver'
 ) {
-  const userRef = doc(firestore, 'users', user.uid);
+  const userRef = doc(db, 'users', user.uid);
 
   await setDoc(userRef, {
     id: user.uid,
     name: name,
     email: user.email,
-    userType: 'admin', // Default all new users to admin
+    userType: userType,
     phoneNumber: phoneNumber,
   });
 }
@@ -77,8 +77,6 @@ export function AuthForm() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useFirebaseAuth();
-  const { firestore } = useFirebase();
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -87,7 +85,7 @@ export function AuthForm() {
 
   const signUpForm = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { name: '', email: '', password: '', phoneNumber: '' },
+    defaultValues: { name: '', email: '', password: '', phoneNumber: '', userType: 'driver' },
   });
 
   const handleAuthError = (error: any) => {
@@ -130,12 +128,6 @@ export function AuthForm() {
 
   const onSignUp = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
-    if (!firestore) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Serviço de banco de dados indisponível.'});
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -144,11 +136,11 @@ export function AuthForm() {
       );
       await updateProfile(userCredential.user, { displayName: data.name });
       
-      await createUserProfile(firestore, userCredential.user, data.name, data.phoneNumber);
+      await createUserProfile(userCredential.user, data.name, data.phoneNumber, data.userType);
       
       toast({
         title: 'Conta criada com sucesso!',
-        description: `Seu perfil foi criado como Administrador. Você será redirecionado para o login.`,
+        description: `Seu perfil foi criado como ${data.userType}. Você será redirecionado para o login.`,
       });
       
       setActiveTab('login');
@@ -288,6 +280,40 @@ export function AuthForm() {
                           placeholder="Mínimo de 6 caracteres"
                           {...field}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={signUpForm.control}
+                  name="userType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Tipo de Perfil</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="driver" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Motorista
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="admin" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Administrador
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -26,7 +26,6 @@ import { CheckCircle2, XCircle, CircleSlash, Download, Edit } from 'lucide-react
 import {
   useDoc,
   useCollection,
-  useFirebase,
   WithId,
 } from '@/firebase';
 import { doc, where, orderBy } from 'firebase/firestore';
@@ -36,7 +35,8 @@ import 'jspdf-autotable';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 import Image from 'next/image';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
+import { db } from '@/firebase/config';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -89,12 +89,11 @@ function VehicleDetailsSkeleton() {
 
 export default function VehicleDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { firestore } = useFirebase();
   const { user } = useAuth();
 
   const vehicleRef = useMemo(
-    () => (firestore ? doc(firestore, 'vehicles', id) : null),
-    [firestore, id]
+    () => (id ? doc(db, 'vehicles', id) : null),
+    [id]
   );
   const { data: vehicle, isLoading: isLoadingVehicle } =
     useDoc<Vehicle>(vehicleRef);

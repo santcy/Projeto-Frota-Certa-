@@ -1,21 +1,21 @@
 'use client';
 import { AuthForm } from '@/components/auth/auth-form';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Wrench } from 'lucide-react';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
-  const { user, isUserLoading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!loading && user) {
       router.push('/dashboard');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, loading, router]);
   
-  if (isUserLoading || user) {
+  if (loading || user) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

@@ -22,7 +22,7 @@ import { orderBy, limit } from 'firebase/firestore';
 import type { Vehicle, Checklist } from '@/lib/types';
 import { CHECKLIST_ITEMS, CHECKLIST_ITEMS_LEVE } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 
 function DashboardCard({
   title,
@@ -85,14 +85,12 @@ function getProblemDescription(checklist: WithId<Checklist>): string | string[] 
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, loading: isUserLoading } = useAuth();
   const { data: vehicles, isLoading: isLoadingVehicles } = useCollection<Vehicle>('vehicles');
   const { data: recentChecklists, isLoading: isLoadingChecklists } = useCollection<Checklist>('checklists', orderBy('date', 'desc'), limit(50));
 
-  // Show skeleton if user role is not determined yet
-  const isLoading = isLoadingVehicles || isLoadingChecklists || !user;
+  const isLoading = isLoadingVehicles || isLoadingChecklists || isUserLoading;
 
-  // Do not show for drivers
   if (user && user.role === 'driver') {
       return (
           <div className="mx-auto w-full max-w-7xl">

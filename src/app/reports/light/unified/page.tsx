@@ -23,7 +23,7 @@ import { Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { CHECKLIST_ITEMS_LEVE } from '@/lib/types';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;

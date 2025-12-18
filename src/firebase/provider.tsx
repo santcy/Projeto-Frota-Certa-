@@ -1,24 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User } from 'firebase/auth';
+import { Auth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { db, auth as authInstance, app } from './config';
 
 interface FirebaseProviderProps {
   children: ReactNode;
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
-}
-
-// Internal state for user authentication - This is no longer used here but kept for reference
-// The user state is now managed within AuthProvider in auth-context.tsx
-interface UserAuthState {
-  user: User | null;
-  isUserLoading: boolean;
-  userError: Error | null;
 }
 
 // Combined state for the Firebase context
@@ -46,21 +36,18 @@ export const FirebaseContext = createContext<FirebaseContextState | undefined>(u
  */
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   children,
-  firebaseApp,
-  firestore,
-  auth,
 }) => {
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
-    const servicesAvailable = !!(firebaseApp && firestore && auth);
+    const servicesAvailable = !!(app && db && authInstance);
     return {
       areServicesAvailable: servicesAvailable,
-      firebaseApp: servicesAvailable ? firebaseApp : null,
-      firestore: servicesAvailable ? firestore : null,
-      auth: servicesAvailable ? auth : null,
+      firebaseApp: servicesAvailable ? app : null,
+      firestore: servicesAvailable ? db : null,
+      auth: servicesAvailable ? authInstance : null,
     };
-  }, [firebaseApp, firestore, auth]);
+  }, []);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -93,7 +80,7 @@ export const useFirebase = (): FirebaseServices => {
 };
 
 /** Hook to access Firebase Auth instance. */
-export const useAuth = (): Auth => {
+export const useAuthFirebase = (): Auth => {
   const { auth } = useFirebase();
   return auth;
 };

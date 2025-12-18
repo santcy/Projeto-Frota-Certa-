@@ -9,12 +9,10 @@ import {
   Query,
   DocumentData,
   FirestoreError,
-  orderBy,
-  limit,
-  QueryConstraint
+  QueryConstraint,
 } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
-import { useAuth } from '@/context/auth-context';
+import { db } from '@/firebase/config';
+import { useAuth } from '@/firebase/auth';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -30,14 +28,13 @@ export function useCollection<T = any>(
   collectionName: string,
   ...queryConstraints: QueryConstraint[]
 ): UseCollectionResult<T> {
-  const { user, isUserLoading } = useAuth();
-  const firestore = useFirestore();
+  const { user, loading } = useAuth();
   const [data, setData] = useState<WithId<T>[] | null>([]);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isUserLoading || !firestore) {
+    if (loading) {
       setIsLoading(true);
       return;
     }
@@ -49,14 +46,18 @@ export function useCollection<T = any>(
     }
 
     let q: Query;
-    const baseCollection = collection(firestore, collectionName);
+    const baseCollection = collection(db, collectionName);
+    
+    const constraints: QueryConstraint[] = [...queryConstraints];
 
-    // Admins can see everything, drivers only see their own checklists.
+    // If user is a driver, add a constraint to fetch only their own checklists.
+    // This logic is specific and should be handled carefully.
     if (collectionName === 'checklists' && user.role === 'driver') {
-      q = query(baseCollection, where('userId', '==', user.uid), ...queryConstraints);
-    } else {
-      q = query(baseCollection, ...queryConstraints);
+      constraints.push(where('userId', '==', user.uid));
     }
+    
+    q = query(baseCollection, ...constraints);
+
 
     const unsubscribe = onSnapshot(
       q,
@@ -83,7 +84,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [collectionName, user, isUserLoading, firestore, ...queryConstraints]);
+  }, [collectionName, user, loading, ...queryConstraints]);
 
   return { data, error, isLoading };
 }

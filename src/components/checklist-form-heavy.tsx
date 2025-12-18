@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   collection,
   doc,
@@ -46,8 +46,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 import { Check, Send, Camera, RefreshCw, PlusCircle, Trash2 } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useAuth } from '@/firebase/auth';
+import { useCollection } from '@/firebase';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 import Image from 'next/image';
 import {
@@ -59,6 +59,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { db } from '@/firebase/config';
 
 const heavyChecklistItemsSchema = Object.values(CHECKLIST_ITEMS)
   .flat()
@@ -205,15 +206,10 @@ const issueStatuses = ['issue', 'nao'];
 export function ChecklistFormHeavy() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { firestore } = useFirebase();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const vehiclesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
-  );
   const { data: vehicles, isLoading: isLoadingVehicles } =
-    useCollection<Vehicle>(vehiclesQuery);
+    useCollection<Vehicle>('vehicles');
     
   const defaultItems = Object.values(CHECKLIST_ITEMS)
   .flat()
@@ -250,7 +246,7 @@ export function ChecklistFormHeavy() {
   ];
 
   async function onSubmit(data: FormValues) {
-    if (!firestore || !user) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -267,9 +263,9 @@ export function ChecklistFormHeavy() {
         return;
     }
     
-    const batch = writeBatch(firestore);
+    const batch = writeBatch(db);
     try {
-      const checklistRef = doc(collection(firestore, 'checklists'));
+      const checklistRef = doc(collection(db, 'checklists'));
       
       const newChecklist = {
         ...data,
@@ -282,7 +278,7 @@ export function ChecklistFormHeavy() {
       batch.set(checklistRef, newChecklist);
 
       const hasIssues = Object.values(data.items).some(status => issueStatuses.includes(status));
-      const vehicleRef = doc(firestore, 'vehicles', data.vehicleId);
+      const vehicleRef = doc(db, 'vehicles', data.vehicleId);
       const vehicleUpdateData = {
         odometer: data.odometer,
         fuelLevel: data.fuelLevelOut,
@@ -296,7 +292,7 @@ export function ChecklistFormHeavy() {
 
       if (itemsWithIssues.length > 0) {
         for (const [itemId, reportedStatus] of itemsWithIssues) {
-            const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+            const requestRef = doc(collection(db, 'maintenanceRequests'));
             const itemName = allItemsMap.get(itemId) || 'Item desconhecido';
 
             batch.set(requestRef, {
@@ -320,7 +316,7 @@ export function ChecklistFormHeavy() {
       // Create maintenance requests for dynamically added items
       if (data.requestedItems && data.requestedItems.length > 0) {
         for (const item of data.requestedItems) {
-          const requestRef = doc(collection(firestore, 'maintenanceRequests'));
+          const requestRef = doc(collection(db, 'maintenanceRequests'));
           batch.set(requestRef, {
             id: requestRef.id,
             vehicleId: data.vehicleId,

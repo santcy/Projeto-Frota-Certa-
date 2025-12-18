@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -31,6 +31,7 @@ export function SidebarNav() {
   const { user } = useAuth();
   
   const isReportsActive = pathname.startsWith('/reports');
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -51,7 +52,7 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {user?.role === 'admin' && (
+          {isAdmin && (
             <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip={{ children: 'Dashboard' }}>
                 <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
@@ -73,7 +74,7 @@ export function SidebarNav() {
               <Link href="/checklist/heavy"><ClipboardCheck /><span>Checklist Pesado</span></Link>
               </SidebarMenuButton>
           </SidebarMenuItem>
-           {user?.role === 'admin' && (
+           {isAdmin && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/requests')} tooltip={{ children: 'Solicitações de Manutenção' }}>

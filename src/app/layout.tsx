@@ -3,10 +3,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
-import { AuthProvider } from '@/context/auth-context';
+import { AuthProvider } from '@/firebase/auth';
 import { AppLayout } from '@/components/layout/app-layout';
 import { usePathname } from 'next/navigation';
+import { FirebaseClientProvider } from '@/firebase';
 
 export default function RootLayout({
   children,

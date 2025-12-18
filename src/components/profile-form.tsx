@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Check, Edit, Camera, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import type { AppUser } from '@/context/auth-context';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { auth as firebaseAuthInstance } from '@/firebase/config';
 import {
   Dialog,
   DialogContent,
@@ -137,13 +137,12 @@ type FormValues = z.infer<typeof formSchema>;
 
 
 interface ProfileFormProps {
-  user: AppUser;
+  user: any;
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useFirebaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormValues>({
@@ -151,7 +150,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     defaultValues: {
       name: user.name || '',
       email: user.email || '',
-      phoneNumber: user.firebaseUser.phoneNumber || '',
+      phoneNumber: user.phoneNumber || '',
     },
   });
 
@@ -159,15 +158,15 @@ export function ProfileForm({ user }: ProfileFormProps) {
     form.reset({
       name: user.name || '',
       email: user.email || '',
-      phoneNumber: user.firebaseUser.phoneNumber || '',
+      phoneNumber: user.phoneNumber || '',
     });
   }, [user, form]);
   
   const handlePhotoUpdate = async (photoDataUrl: string) => {
-    if (!auth.currentUser) return;
+    if (!firebaseAuthInstance.currentUser) return;
     setIsSubmitting(true);
     try {
-        await updateProfile(auth.currentUser, {
+        await updateProfile(firebaseAuthInstance.currentUser, {
             photoURL: photoDataUrl,
         });
         toast({
@@ -187,7 +186,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   }
 
   async function onSubmit(data: FormValues) {
-    if (!auth.currentUser) {
+    if (!firebaseAuthInstance.currentUser) {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -199,12 +198,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
     setIsSubmitting(true);
 
     try {
-      await updateProfile(auth.currentUser, {
+      await updateProfile(firebaseAuthInstance.currentUser, {
         displayName: data.name,
       });
 
-      // Phone number is in Firestore, not Auth, so we don't update it here.
-      // If we wanted to, we'd need a Firestore update function.
+      // Phone number and name update in Firestore would require a separate function
+      // that uses `updateDoc`. For now, we only update Auth `displayName`.
 
       toast({
         title: 'Nome Atualizado!',
@@ -231,7 +230,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         <div className='flex flex-col items-center gap-4'>
             <div className="relative h-32 w-32">
                 <Image
-                    src={user.firebaseUser.photoURL || `https://avatar.vercel.sh/${user.email}.png`}
+                    src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`}
                     alt="Foto de perfil"
                     width={128}
                     height={128}

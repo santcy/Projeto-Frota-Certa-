@@ -13,7 +13,7 @@ import type { Vehicle, VehicleStatus } from '@/lib/types';
 import { ArrowRight, Fuel, Gauge, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 
 function getStatusVariant(status?: VehicleStatus) {
   switch (status) {
@@ -118,7 +118,7 @@ function VehicleCardSkeleton() {
 }
 
 export default function VehiclesPage() {
-  const { user, isUserLoading: isAuthLoading } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
 
   const { data: vehicles, isLoading: isLoadingVehicles } =
     useCollection<Vehicle>('vehicles', orderBy('plate', 'asc'));

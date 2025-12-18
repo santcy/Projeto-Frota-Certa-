@@ -2,7 +2,7 @@
 
 import { ProfileForm } from '@/components/profile-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function ProfilePageSkeleton() {
@@ -38,9 +38,9 @@ function ProfilePageSkeleton() {
 
 
 export default function ProfilePage() {
-    const { user, isUserLoading } = useAuth();
+    const { user, loading } = useAuth();
 
-    if (isUserLoading) {
+    if (loading) {
         return (
             <div className="mx-auto w-full max-w-7xl flex justify-center">
                 <ProfilePageSkeleton />

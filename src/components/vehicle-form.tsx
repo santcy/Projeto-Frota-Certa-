@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +20,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Edit, Send } from 'lucide-react';
-import { useFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, WithId } from '@/firebase';
+import { WithId } from '@/firebase';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Label } from './ui/label';
 import type { Vehicle } from '@/lib/types';
+import { db } from '@/firebase/config';
 
 
 const formSchema = z.object({
@@ -50,7 +51,6 @@ interface VehicleFormProps {
 export function VehicleForm({ vehicle }: VehicleFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const { firestore } = useFirebase();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const isEditing = !!vehicle;
@@ -77,55 +77,55 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
   }, [vehicle, form]);
 
   async function onSubmit(data: FormValues) {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Serviço de banco de dados indisponível.',
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
-    if (isEditing) {
-      // Update existing vehicle
-      const vehicleRef = doc(firestore, 'vehicles', vehicle.id);
-      updateDocumentNonBlocking(vehicleRef, data);
-       toast({
-        title: 'Veículo Atualizado!',
-        description: `O veículo ${data.plate} foi atualizado com sucesso.`,
-        action: <Check className="h-5 w-5 text-green-500" />,
-      });
-      setTimeout(() => {
-        router.push(`/vehicles/${vehicle.id}`);
-        router.refresh();
-      }, 1000);
+    try {
+        if (isEditing) {
+          // Update existing vehicle
+          const vehicleRef = doc(db, 'vehicles', vehicle.id);
+          await updateDoc(vehicleRef, data);
+           toast({
+            title: 'Veículo Atualizado!',
+            description: `O veículo ${data.plate} foi atualizado com sucesso.`,
+            action: <Check className="h-5 w-5 text-green-500" />,
+          });
+          setTimeout(() => {
+            router.push(`/vehicles/${vehicle.id}`);
+            router.refresh();
+          }, 1000);
 
-    } else {
-      // Create new vehicle
-      const vehicleRef = doc(collection(firestore, 'vehicles'));
-      const newVehicle = {
-        ...data,
-        id: vehicleRef.id,
-        status: 'Operacional',
-        fuelLevel: 100,
-        odometer: 0,
-      };
+        } else {
+          // Create new vehicle
+          const vehicleRef = doc(collection(db, 'vehicles'));
+          const newVehicle = {
+            ...data,
+            id: vehicleRef.id,
+            status: 'Operacional',
+            fuelLevel: 100,
+            odometer: 0,
+          };
 
-      setDocumentNonBlocking(vehicleRef, newVehicle, {});
-       toast({
-        title: 'Veículo Cadastrado!',
-        description: `O veículo ${data.plate} foi adicionado com sucesso.`,
-        action: <Check className="h-5 w-5 text-green-500" />,
-      });
-       setTimeout(() => {
-        router.push('/vehicles');
-        router.refresh();
-      }, 1000);
+          await setDoc(vehicleRef, newVehicle);
+           toast({
+            title: 'Veículo Cadastrado!',
+            description: `O veículo ${data.plate} foi adicionado com sucesso.`,
+            action: <Check className="h-5 w-5 text-green-500" />,
+          });
+           setTimeout(() => {
+            router.push('/vehicles');
+            router.refresh();
+          }, 1000);
+        }
+    } catch(error) {
+        console.error("Error saving vehicle:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao salvar veículo",
+            description: "Ocorreu um erro ao salvar os dados do veículo. Tente novamente."
+        })
+    } finally {
+        setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   }
 
   return (
